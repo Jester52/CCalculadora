@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+        <link rel="manifest" href="manifest.json">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+        <meta name="apple-mobile-web-app-title" content="Calculadora">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Calculadora Android</title>
+    <style>
+        :root {
+            --bg-android: #f7f9fc;
+            --text-android: #1a1c1e;
+            --btn-num: #e1e2e5;
+            --btn-op: #c2e7ff;
+            --btn-func: #dae2f0;
+            --accent: #004a77;
+        }
+
+        /* Modo oscuro automático (común en Android) */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-android: #1a1c1e;
+                --text-android: #e5e3e1;
+                --btn-num: #2e3033;
+                --btn-op: #004a77;
+                --btn-func: #43474e;
+                --accent: #001d7a;
+                --func: #247bb1;
+
+            }
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+        body { background-color: var(--bg-android); color: var(--text-android); font-family: 'Roboto', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100vh; margin: 0; padding-bottom: 20px; }
+
+        /* Setup Mago */
+        #admin-panel { display: none; position: absolute; top: 10%; background: var(--btn-func); padding: 20px; border-radius: 28px; z-index: 100; width: 300px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        #admin-panel input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 12px; border: 1px solid #777; font-size: 16px; background: var(--bg-android); color: var(--text-android); }
+
+        /* Evidencia Sutil (Línea Android) */
+        #magic-indicator { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); width: 35px; height: 3px; background: #333; border-radius: 5px; opacity: 0; transition: opacity 0.3s; }
+
+        /* Display */
+        .display-container { width: 100%; padding: 20px 30px; text-align: right; }
+        #screen { font-size: 64px; font-weight: 400; transition: all 0.1s; min-height: 80px; overflow: hidden; }
+
+        /* Grid de Botones Android Material You */
+        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; width: 100%; max-width: 400px; padding: 10px; }
+        
+        button { 
+            border: none; border-radius: 24px; height: 80px; font-size: 24px; cursor: pointer; 
+            display: flex; align-items: center; justify-content: center; transition: background 0.2s;
+        }
+
+        .btn-num { background-color: var(--btn-num); color: var(--text-android); }
+        .btn-op { background-color: var(--btn-op); color: var(--accent); font-size: 28px; }
+        .btn-func { background-color: var(--btn-func); color: var(--func);font-size: 30px; }
+        .btn-equal { background-color: #004a77; color: #dae2f0; border-radius: 24px; grid-row: span 2;height: 100%; }
+
+        button:active { filter: contrast(0.8); }
+    </style>
+</head>
+<body>
+
+<!-- Volver al menú -->
+    <div id="btn-back-menu" style="
+        position: absolute; 
+        top: 0; 
+        right: 0; 
+        width: 30%; 
+        height: 40px; 
+        z-index: 10000; 
+        background: transparent;
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        user-select: none;
+    "></div>
+ 
+    <div style="position:absolute; top:0; left:0; width:80px; height:80px;" onclick="abrirConfig()"></div>
+
+    <div id="admin-panel">
+        <h3 style="margin:0;">FORZAR</h3>
+        <input type="number" id="valForzado" placeholder="Número forzado">
+        <button onclick="cerrarConfig()" style="width:100%; background:var(--accent); color:white; border-radius:12px; height:45px; margin-top:10px;">Guardar</button>
+    </div>
+
+    <div id="magic-indicator"></div>
+
+    <div class="display-container">
+        <div id="screen">0</div>
+    </div>
+
+    <div class="grid">
+        <button class="btn-func" onclick="resetCalc()">C</button>
+        <button class="btn-func" onclick="setOp('/')">÷</button>
+        <button class="btn-func" onclick="setOp('*')">×</button>
+        <button class="btn-func" onclick="backspace()">⌫</button>
+        
+
+        <button class="btn-num" onclick="numClick('7')">7</button>
+        <button class="btn-num" onclick="numClick('8')">8</button>
+        <button class="btn-num" onclick="numClick('9')">9</button>
+        <button class="btn-func" onclick="setOp('-')">−</button>
+        
+
+        <button class="btn-num" onclick="numClick('4')">4</button>
+        <button class="btn-num" onclick="numClick('5')">5</button>
+        <button class="btn-num" onclick="numClick('6')">6</button>
+        <button class="btn-func" onclick="setOp('+')">+</button>
+        
+
+        <button class="btn-num" onclick="numClick('1')">1</button>
+        <button class="btn-num" onclick="numClick('2')">2</button>
+        <button class="btn-num" onclick="numClick('3')">3</button>
+        <button class="btn-equal" onclick="calcular()">=</button>
+
+        <button class="btn-num" onclick="handleMagicTrigger()">%</button>
+        <!--<button class="btn-func" onclick="toggleSign()">+/-</button>-->
+        <button class="btn-num" onclick="numClick('0')">0</button>
+        <button class="btn-num" onclick="numClick('.')">,</button>
+        
+        
+    </div>
+
+    <script>
+        let currentInput = "0";
+        let previousInput = "";
+        let operation = null;
+        let n1 = 0, n2 = 0, tn = 0;
+        let numeroForzado = parseFloat(localStorage.getItem('activeForce')) || 0;
+        let modoMagico = false, contadorOps = 0;
+        let digitosDif = [], idxDif = 0, clicksPorc = 0;
+
+        const screen = document.getElementById('screen');
+
+        function abrirConfig() { document.getElementById('admin-panel').style.display = 'block'; }
+        function cerrarConfig() { 
+            numeroForzado = parseFloat(document.getElementById('valForzado').value) || 0;
+            document.getElementById('admin-panel').style.display = 'none'; 
+        }
+
+        function handleMagicTrigger() {
+            clicksPorc++;
+            if (clicksPorc === 2) {
+                modoMagico = true;
+                document.getElementById('magic-indicator').style.opacity = "0.3"; // Más tenue en Android
+                if(window.navigator.vibrate) window.navigator.vibrate([40]); 
+                clicksPorc = 0;
+            }
+        }
+
+        function numClick(val) {
+            if (modoMagico && contadorOps === 2) {
+                if (idxDif < digitosDif.length) {
+                    if (idxDif === 0) currentInput = ""; 
+                    currentInput += digitosDif[idxDif];
+                    idxDif++;
+                }
+            } else {
+                if (currentInput === "0" && val !== ".") currentInput = val;
+                else currentInput += val;
+            }
+            updateScreen();
+        }
+
+function setOp(op) {
+    // 1. Sincronización: Leemos el número forzado guardado en configuración justo al empezar
+    if (modoMagico) {
+        numeroForzado = parseFloat(localStorage.getItem('activeForce')) || 0;
+    }
+
+    // 2. Lógica en Modo Mágico (Interceptación de dígitos)
+    if (modoMagico) {
+        contadorOps++;
+        if (contadorOps === 1) {
+            // Guardamos el primer número (N1)
+            n1 = parseFloat(currentInput);
+            currentInput = "0";
+        } else if (contadorOps === 2) {
+            // Guardamos el segundo número (N2)
+            n2 = parseFloat(currentInput);
+            // Calculamos la suma parcial
+            tn = n1 + n2;
+            // Calculamos la diferencia necesaria para llegar al número forzado
+            let dif = numeroForzado - tn;
+            // Convertimos esa diferencia en un array de dígitos para "inyectarlos" después
+            digitosDif = dif.toString().split('');
+            idxDif = 0;
+            currentInput = "0";
+        }
+    } else {
+        // 3. Lógica Normal (Cuando no estás haciendo magia)
+        operation = op;
+        previousInput = currentInput;
+        currentInput = "0";
+    }
+    updateScreen();
+}
+
+        function calcular() {
+            if (modoMagico && contadorOps >= 2) {
+                currentInput = numeroForzado.toString();
+                document.getElementById('magic-indicator').style.opacity = "0";
+                modoMagico = false;
+                contadorOps = 0;
+            } else {
+                let res;
+                const prev = parseFloat(previousInput);
+                const curr = parseFloat(currentInput);
+                if (isNaN(prev) || isNaN(curr)) return;
+                switch (operation) {
+                    case '+': res = prev + curr; break;
+                    case '-': res = prev - curr; break;
+                    case '*': res = prev * curr; break;
+                    case '/': res = prev / curr; break;
+                    default: return;
+                }
+                currentInput = res.toString();
+                operation = null;
+            }
+            updateScreen();
+        }
+
+        function updateScreen() {
+            screen.innerText = currentInput;
+            if (currentInput.length > 7) screen.style.fontSize = "40px";
+            else screen.style.fontSize = "64px";
+        }
+
+        function resetCalc() {
+            currentInput = "0"; previousInput = ""; operation = null;
+            contadorOps = 0; modoMagico = false;
+            document.getElementById('magic-indicator').style.opacity = "0";
+            updateScreen();
+        }
+
+        function backspace() {
+            if (currentInput.length > 1) currentInput = currentInput.slice(0, -1);
+            else currentInput = "0";
+            updateScreen();
+        }
+
+        function toggleSign() {
+            currentInput = (parseFloat(currentInput) * -1).toString();
+            updateScreen();
+        }
+
+        //Función para volver al menú
+        (function() {
+    const btnBack = document.getElementById('btn-back-menu');
+    let timerBack;
+
+    // Función unificada para iniciar el conteo
+    function handleStart(e) {
+        // e.preventDefault(); // Desactiva esto si el botón te bloquea otros clics
+        
+        // Limpiamos cualquier temporizador previo por seguridad
+        clearTimeout(timerBack);
+
+        timerBack = setTimeout(() => {
+            if (navigator.vibrate) navigator.vibrate(60);
+            window.location.href = 'index.html';
+        }, 2000);
+    }
+
+    // Función unificada para cancelar
+    function handleEnd() {
+        clearTimeout(timerBack);
+    }
+
+    // Eventos para Móviles
+    btnBack.addEventListener('touchstart', handleStart, { passive: false });
+    btnBack.addEventListener('touchend', handleEnd);
+    btnBack.addEventListener('touchcancel', handleEnd);
+
+    // Eventos para PC (Pruebas)
+    btnBack.addEventListener('mousedown', handleStart);
+    btnBack.addEventListener('mouseup', handleEnd);
+    btnBack.addEventListener('mouseleave', handleEnd);
+})();
+    </script>
+</body>
+</html>
