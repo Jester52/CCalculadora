@@ -10,84 +10,84 @@
     <title>Calculadora</title>
     <style>
         :root {
-            --bg-android: #f7f9fc;
-            --text-main: #1a1c1e;
-            --btn-num: #e1e2e5;
-            --btn-op: #c2e7ff;
-            --btn-func: #dae2f0;
-            --accent: #004a77;
+            --bg-android: #000000;
+            --text-main: #e5e3e1;
+            --btn-num: #2e3033;
+            --btn-op: #004a77;
+            --btn-func: #43474e;
+            --accent-blue: #3b82f6;
+            --text-dim: #9ea1a5;
         }
 
-        @media (prefers-color-scheme: dark) {
-            :root {
-                --bg-android: #1a1c1e;
-                --text-main: #e5e3e1;
-                --btn-num: #2e3033;
-                --btn-op: #004a77;
-                --btn-func: #43474e;
-                --accent: #d2e4ff;
-            }
-        }
-
-        * { 
-            box-sizing: border-box; 
-            -webkit-tap-highlight-color: transparent; 
-            touch-action: none; 
-        }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         
         html, body {
-            height: 100svh;
-            width: 100vw;
+            height: 100%;
+            width: 100%;
             margin: 0;
             padding: 0;
             overflow: hidden;
             background-color: var(--bg-android);
             position: fixed;
             font-family: 'Roboto', sans-serif;
+            touch-action: none;
         }
 
-        /* CAPA MAESTRA PARA CENTRAR TODO */
-        .safe-area {
+        /* Línea secreta de activación */
+        #magic-line {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 30%;
+            height: 2px;
+            background-color: var(--accent-blue);
+            z-index: 2000;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .app-container {
             height: 100svh;
-            width: 100vw;
             display: flex;
             flex-direction: column;
-            justify-content: flex-end; /* Todo se apila abajo */
-            padding-bottom: calc(env(safe-area-inset-bottom) + 20px);
+            justify-content: flex-end; /* Empuja todo hacia abajo */
         }
 
-        /* VISOR MÁS PEQUEÑO Y BAJO */
+        /* Visor: Ocupa todo el espacio de arriba */
         .display {
-            width: 100%;
-            padding: 0 40px 10px 40px;
-            text-align: right;
+            flex: 1;
+            display: flex;
+            align-items: flex-end;
+            justify-content: flex-end;
+            padding: 20px 30px;
         }
 
         #screen {
-            font-size: 55px; /* Tamaño fijo, no elástico */
+            font-size: 75px;
             font-weight: 300;
             color: var(--text-main);
             margin: 0;
+            min-height: 1.1em;
+            text-align: right;
         }
 
-        /* TECLADO CON TAMAÑO FIJO CONTROLADO */
+        /* Teclado: Sin huecos inferiores */
         .numpad {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 12px;
-            padding: 0 25px;
+            gap: 10px;
+            padding: 10px 15px calc(env(safe-area-inset-bottom) + 15px) 15px;
             width: 100%;
-            max-width: 420px; /* Limitamos el ancho */
+            max-width: 500px;
             margin: 0 auto;
         }
 
         button {
             border: none;
-            border-radius: 50%; /* Botones circulares estilo Android antiguo/clásico ocupan menos espacio */
-            width: 70px; /* TAMAÑO FIJO */
-            height: 70px; /* TAMAÑO FIJO */
-            margin: 0 auto;
-            font-size: 22px;
+            border-radius: 18px;
+            aspect-ratio: 1.1 / 1; /* Un poco más anchos que altos como en Samsung */
+            font-size: 24px;
             background-color: var(--btn-num);
             color: var(--text-main);
             display: flex;
@@ -95,34 +95,49 @@
             justify-content: center;
         }
 
-        .btn-op { background-color: var(--btn-op); color: var(--accent); font-size: 26px; }
-        .btn-func { background-color: var(--btn-func); }
-        .btn-equal { 
-            background-color: #004a77 !important; 
-            color: #ffffff !important; 
-            grid-row: span 2; 
-            height: 152px; /* 70 + 70 + 12 gap */
-            border-radius: 40px;
+        /* Botones de memoria (Fila superior teclado) */
+        .btn-mem { 
+            background: transparent; 
+            color: var(--text-dim); 
+            font-size: 18px; 
+            aspect-ratio: 1.5 / 1;
         }
 
-        button:active { filter: brightness(0.85); transform: scale(0.92); }
+        .btn-op { background-color: var(--btn-op); color: #d2e4ff; font-size: 28px; }
+        .btn-func { background-color: var(--btn-func); color: #8ab4f8; }
+        
+        .btn-equal { 
+            background-color: var(--accent-blue) !important;
+            color: white !important;
+            grid-row: span 2;
+            aspect-ratio: auto;
+            border-radius: 25px;
+        }
 
-        /* SALIDAS SECRETAS */
-        #exit-btn { position: absolute; top: 0; right: 0; width: 60px; height: 60px; z-index: 100; }
-        #config-btn { position: absolute; top: 0; left: 0; width: 60px; height: 60px; z-index: 100; }
+        button:active { filter: brightness(1.4); }
+
+        /* Botones invisibles de control */
+        #exit-btn { position: absolute; top: 0; right: 0; width: 80px; height: 80px; z-index: 10; }
+        #config-btn { position: absolute; top: 0; left: 0; width: 80px; height: 80px; z-index: 10; }
     </style>
 </head>
 <body>
 
+    <div id="magic-line"></div>
     <div id="exit-btn"></div>
     <div id="config-btn" onclick="abrirConfig()"></div>
 
-    <div class="safe-area">
+    <div class="app-container">
         <div class="display">
-            <div id="screen">0</div>
+            <div id="screen"></div>
         </div>
 
         <div class="numpad">
+            <button class="btn-mem">MC</button>
+            <button class="btn-mem">M+</button>
+            <button class="btn-mem">M-</button>
+            <button class="btn-mem">MR</button>
+
             <button class="btn-func" onclick="reset()">C</button>
             <button class="btn-op" onclick="op('/')">÷</button>
             <button class="btn-op" onclick="op('*')">×</button>
@@ -150,72 +165,67 @@
     </div>
 
     <script>
-        // Lógica de forzado Cronos
-        let cur = "0", pre = "", oper = null;
+        let cur = "", pre = "", oper = null;
         let n1 = 0, n2 = 0, magicMode = false, step = 0;
         let diffArr = [], diffIdx = 0, mClicks = 0;
+        
+        const displayEl = document.getElementById('screen');
+        const magicLine = document.getElementById('magic-line');
 
         function press(v) {
             if (magicMode && step === 2) {
-                if (diffIdx < diffArr.length) {
-                    if (diffIdx === 0) cur = "";
-                    cur += diffArr[diffIdx];
-                    diffIdx++;
-                }
-            } else {
-                cur = (cur === "0" && v !== ".") ? v : cur + v;
-            }
-            document.getElementById('screen').innerText = cur;
+                if (diffIdx < diffArr.length) { cur += diffArr[diffIdx]; diffIdx++; }
+            } else { cur += v; }
+            displayEl.innerText = cur;
         }
 
         function op(o) {
             if (magicMode) {
                 step++;
-                if (step === 1) { n1 = parseFloat(cur); cur = "0"; }
+                if (step === 1) { n1 = parseFloat(cur || 0); cur = ""; }
                 else if (step === 2) {
-                    n2 = parseFloat(cur);
+                    n2 = parseFloat(cur || 0);
                     let target = parseFloat(localStorage.getItem('forceVal')) || 0;
                     diffArr = (target - (n1 + n2)).toString().split('');
-                    diffIdx = 0; cur = "0";
+                    diffIdx = 0; cur = "";
                 }
-            } else {
-                oper = o; pre = cur; cur = "0";
-            }
+            } else { oper = o; pre = cur; cur = ""; }
+            displayEl.innerText = cur;
         }
 
         function calc() {
             if (magicMode && step >= 2) {
                 cur = localStorage.getItem('forceVal') || "0";
                 magicMode = false; step = 0;
+                magicLine.style.opacity = "0";
             } else {
-                try {
-                    let res = eval(pre + oper + cur);
-                    cur = res.toString();
-                } catch(e) { cur = "0"; }
+                try { cur = eval(pre + oper + cur).toString(); } catch(e) { cur = ""; }
             }
-            document.getElementById('screen').innerText = cur;
+            displayEl.innerText = cur;
         }
 
         function magic() {
             mClicks++;
             if (mClicks === 2) {
                 magicMode = true;
+                magicLine.style.opacity = "0.4";
                 if(navigator.vibrate) navigator.vibrate(40);
                 mClicks = 0;
             }
         }
 
-        function reset() { cur = "0"; magicMode = false; step = 0; document.getElementById('screen').innerText = cur; }
-        function del() { cur = cur.length > 1 ? cur.slice(0, -1) : "0"; document.getElementById('screen').innerText = cur; }
-
+        function reset() { cur = ""; magicMode = false; step = 0; magicLine.style.opacity = "0"; displayEl.innerText = cur; }
+        function del() { cur = cur.slice(0, -1); displayEl.innerText = cur; }
+        
         function abrirConfig() {
             let v = prompt("Número a forzar:", localStorage.getItem('forceVal') || "");
             if(v !== null) localStorage.setItem('forceVal', v);
         }
 
+        // Salida al menú con toque largo
         let t;
         document.getElementById('exit-btn').addEventListener('touchstart', () => {
-            t = setTimeout(() => window.location.href='index.html', 2000);
+            t = setTimeout(() => { window.location.href = 'index.html'; }, 2000);
         });
         document.getElementById('exit-btn').addEventListener('touchend', () => clearTimeout(t));
     </script>
