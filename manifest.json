@@ -1,6 +1,6 @@
 {
-  "name": "Cronos Pulse Pro",
-  "short_name": "Pulse Pro",
+  "name": "Cronos Pro",
+  "short_name": "Calculadora F",
   "start_url": "index.html",
   "display": "standalone",
   "background_color": "#001f3f",
