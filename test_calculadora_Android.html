@@ -17,6 +17,7 @@
             --btn-func: #43474e;
             --accent-blue: #004a77;
             --text-dim: #9ea1a5;
+            --magic-glow: #007bff; /* Azul neón para la línea */
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -33,28 +34,43 @@
             touch-action: none;
         }
 
-        /* Línea secreta de activación */
+        /* LÍNEA MÁGICA: AJUSTE DEFINITIVO */
         #magic-line {
             position: absolute;
             top: 0;
             left: 50%;
             transform: translateX(-50%);
-            width: 30%;
-            height: 2px;
-            background-color: var(--accent-blue);
-            z-index: 2000;
+            width: 40%; /* Un poco más larga */
+            height: 4px; /* Un poco más gruesa */
+            background-color: var(--magic-glow);
+            box-shadow: 0 0 8px var(--magic-glow); /* Efecto neón para que la veas */
+            z-index: 100000; /* Por encima de TODO */
             opacity: 0;
             transition: opacity 0.3s;
+            pointer-events: none;
         }
+
+        /* ZONAS TÁCTILES SECRETAS */
+        .secret-zone {
+            position: absolute;
+            top: 0;
+            width: 80px;
+            height: 80px;
+            z-index: 99999;
+            background: rgba(255, 255, 255, 0.01); 
+        }
+        #exit-btn { right: 0; }
+        #config-btn { left: 0; }
 
         .app-container {
             height: 100svh;
             display: flex;
             flex-direction: column;
-            justify-content: flex-end; /* Empuja todo hacia abajo */
+            justify-content: flex-end;
+            position: relative;
+            z-index: 1;
         }
 
-        /* Visor: Ocupa todo el espacio de arriba */
         .display {
             flex: 1;
             display: flex;
@@ -72,7 +88,6 @@
             text-align: right;
         }
 
-        /* Teclado: Sin huecos inferiores */
         .numpad {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -86,7 +101,7 @@
         button {
             border: none;
             border-radius: 18px;
-            aspect-ratio: 1.1 / 1; /* Un poco más anchos que altos como en Samsung */
+            aspect-ratio: 1.1 / 1;
             font-size: 24px;
             background-color: var(--btn-num);
             color: var(--text-main);
@@ -95,72 +110,43 @@
             justify-content: center;
         }
 
-        /* Botones de memoria (Fila superior teclado) */
-        .btn-mem { 
-            background: transparent; 
-            color: var(--text-dim); 
-            font-size: 18px; 
-            aspect-ratio: 1.5 / 1;
-        }
-
-        .btn-op { background-color: var(--btn-op); color: #d2e4ff; font-size: 28px; }
-        .btn-func { background-color: var(--btn-func); color: #8ab4f8; }
-        .btn-top {background-color: var(--btn-op); color: #165780; font-size: 28px;font-weight: bold;}
-        
-        .btn-equal { 
-            background-color: var(--accent-blue) !important;
-            color: white !important;
-            grid-row: span 2;
-            aspect-ratio: auto;
-            border-radius: 25px;
-        }
+        .btn-mem { background: transparent; color: var(--text-dim); font-size: 18px; aspect-ratio: 1.5 / 1; }
+        .btn-top { background-color: var(--btn-op); color: #8ab4f8; font-size: 28px; font-weight: bold; }
+        .btn-equal { background-color: var(--accent-blue) !important; color: white !important; grid-row: span 2; aspect-ratio: auto; border-radius: 25px; }
 
         button:active { filter: brightness(1.4); }
-
-        /* Botones invisibles de control */
-        #exit-btn { position: absolute; top: 0; right: 0; width: 80px; height: 80px; z-index: 10; }
-        #config-btn { position: absolute; top: 0; left: 0; width: 80px; height: 80px; z-index: 10; }
     </style>
 </head>
 <body>
 
     <div id="magic-line"></div>
-    <div id="exit-btn"></div>
-    <div id="config-btn" onclick="abrirConfig()"></div>
+    <div id="config-btn" class="secret-zone" onclick="abrirConfig()"></div>
+    <div id="exit-btn" class="secret-zone"></div>
 
     <div class="app-container">
         <div class="display">
-            <div id="screen"></div>
+            <div id="screen">0</div>
         </div>
 
         <div class="numpad">
-            <button class="btn-mem">MC</button>
-            <button class="btn-mem">M+</button>
-            <button class="btn-mem">M-</button>
-            <button class="btn-mem">MR</button>
+            <button class="btn-mem">MC</button><button class="btn-mem">M+</button>
+            <button class="btn-mem">M-</button><button class="btn-mem">MR</button>
 
             <button class="btn-top" onclick="reset()">C</button>
             <button class="btn-top" onclick="op('/')">÷</button>
             <button class="btn-top" onclick="op('*')">×</button>
             <button class="btn-top" onclick="del()">⌫</button>
 
-            <button onclick="press('7')">7</button>
-            <button onclick="press('8')">8</button>
-            <button onclick="press('9')">9</button>
-            <button class="btn-top" onclick="op('-')">−</button>
+            <button onclick="press('7')">7</button><button onclick="press('8')">8</button>
+            <button onclick="press('9')">9</button><button class="btn-top" onclick="op('-')">−</button>
 
-            <button onclick="press('4')">4</button>
-            <button onclick="press('5')">5</button>
-            <button onclick="press('6')">6</button>
-            <button class="btn-top" onclick="op('+')">+</button>
+            <button onclick="press('4')">4</button><button onclick="press('5')">5</button>
+            <button onclick="press('6')">6</button><button class="btn-top" onclick="op('+')">+</button>
 
-            <button onclick="press('1')">1</button>
-            <button onclick="press('2')">2</button>
-            <button onclick="press('3')">3</button>
-            <button class="btn-equal" onclick="calc()">=</button>
+            <button onclick="press('1')">1</button><button onclick="press('2')">2</button>
+            <button onclick="press('3')">3</button><button class="btn-equal" onclick="calc()">=</button>
 
-            <button onclick="magic()">%</button>
-            <button onclick="press('0')">0</button>
+            <button onclick="magic()">%</button><button onclick="press('0')">0</button>
             <button onclick="press('.')">,</button>
         </div>
     </div>
@@ -168,16 +154,20 @@
     <script>
         let cur = "", pre = "", oper = null;
         let n1 = 0, n2 = 0, magicMode = false, step = 0;
-        let diffArr = [], diffIdx = 0, mClicks = 0;
+        let diffArr = [], diffIdx = 0, mClicks = 0, mTimer = null;
         
         const displayEl = document.getElementById('screen');
         const magicLine = document.getElementById('magic-line');
+
+        function updateScreen(v) { 
+            if(displayEl) displayEl.innerText = v || "0"; 
+        }
 
         function press(v) {
             if (magicMode && step === 2) {
                 if (diffIdx < diffArr.length) { cur += diffArr[diffIdx]; diffIdx++; }
             } else { cur += v; }
-            displayEl.innerText = cur;
+            updateScreen(cur);
         }
 
         function op(o) {
@@ -191,55 +181,61 @@
                     diffIdx = 0; cur = "";
                 }
             } else { oper = o; pre = cur; cur = ""; }
-            displayEl.innerText = cur;
+            updateScreen(cur);
         }
 
         function calc() {
             if (magicMode && step >= 2) {
                 cur = localStorage.getItem('forceVal') || "0";
                 magicMode = false; step = 0;
-                magicLine.style.opacity = "0";
+                if (magicLine) magicLine.style.opacity = "0";
             } else {
-                try { cur = eval(pre + oper + cur).toString(); } catch(e) { cur = ""; }
+                try { cur = eval(pre + oper + (cur || "0")).toString(); } catch(e) { cur = "0"; }
             }
-            displayEl.innerText = cur;
+            updateScreen(cur);
         }
 
         function magic() {
-                    mClicks++;
-                    // Al detectar el segundo toque en el botón %
-                    if (mClicks === 2) {
-                        magicMode = true; // Activa el sistema de forzado
-                        
-                        // Muestra la línea azul sutil en la parte superior
-                        if (magicLine) {
-                            magicLine.style.opacity = "0.4";
-                        }
-                        
-                        // Confirmación táctil para el mentalista:
-                        // Vibra 60ms, descansa 50ms, vibra 60ms
-                        if (navigator.vibrate) {
-                            navigator.vibrate([60, 50, 60]);
-                        }
-                        
-                        mClicks = 0; // Reinicia el contador de clics
-                    }
+            mClicks++;
+            clearTimeout(mTimer);
+            mTimer = setTimeout(() => { mClicks = 0; }, 800);
+
+            if (mClicks === 2) {
+                magicMode = true;
+                if (magicLine) {
+                    magicLine.style.opacity = "0.7"; // Aumentado para visibilidad
+                }
+                
+                if (navigator.vibrate) {
+                    navigator.vibrate([60, 50, 60]);
+                }
+                mClicks = 0;
+            }
         }
 
-        function reset() { cur = ""; magicMode = false; step = 0; magicLine.style.opacity = "0"; displayEl.innerText = cur; }
-        function del() { cur = cur.slice(0, -1); displayEl.innerText = cur; }
+        function reset() { 
+            cur = ""; magicMode = false; step = 0; 
+            if (magicLine) magicLine.style.opacity = "0"; 
+            updateScreen("0"); 
+        }
+
+        function del() { cur = cur.slice(0, -1); updateScreen(cur); }
         
         function abrirConfig() {
             let v = prompt("Número a forzar:", localStorage.getItem('forceVal') || "");
             if(v !== null) localStorage.setItem('forceVal', v);
         }
 
-        // Salida al menú con toque largo
-        let t;
-        document.getElementById('exit-btn').addEventListener('touchstart', () => {
-            t = setTimeout(() => { window.location.href = 'index.html'; }, 2000);
-        });
-        document.getElementById('exit-btn').addEventListener('touchend', () => clearTimeout(t));
+        // SALIDA REFORZADA
+        let holdT;
+        const exB = document.getElementById('exit-btn');
+        if (exB) {
+            exB.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                holdT = setTimeout(() => { window.location.assign('index.html'); }, 2000);
+            });
+            exB.addEventListener('touchend', () => clearTimeout(holdT));
+        }
     </script>
 </body>
 </html>
