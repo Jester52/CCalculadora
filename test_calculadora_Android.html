@@ -25,66 +25,70 @@
             }
         }
 
-        /* BLOQUEO DE MOVIMIENTO */
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+        /* BLOQUEO TOTAL DE MOVIMIENTO EXTERNO */
+        * { 
+            box-sizing: border-box; 
+            -webkit-tap-highlight-color: transparent; 
+            outline: none; 
+            touch-action: none; /* Bloquea gestos del navegador */
+        }
         
         html, body {
-            height: 100svh;
+            height: 100%;
             width: 100%;
             margin: 0;
             padding: 0;
             overflow: hidden; /* Prohibido el scroll */
             background-color: var(--bg-android);
-            position: fixed;
+            position: fixed; /* Anclado al viewport */
             font-family: 'Roboto', sans-serif;
-            touch-action: none; /* Evita gestos de zoom o arrastre */
         }
 
+        /* CONTENEDOR DIVIDIDO EN PORCENTAJES EXACTOS */
         .app-container {
-            display: flex;
-            flex-direction: column;
-            height: 100svh;
-            width: 100%;
-            padding-bottom: env(safe-area-inset-bottom);
+            display: grid;
+            grid-template-rows: 35% 65%; /* 100% exacto */
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
         }
 
-        /* VISOR: Reducido a 25% para dar aire */
+        /* VISOR: Ocupa el 35% superior */
         .display-container {
-            height: 25svh; 
-            width: 100%;
-            padding: 0 32px 10px 32px;
             display: flex;
             flex-direction: column;
             justify-content: flex-end;
             align-items: flex-end;
+            padding: 0 32px 15px 32px;
+            background: transparent;
         }
 
         #screen {
-            font-size: clamp(50px, 14vw, 80px);
+            font-size: clamp(50px, 15vw, 85px);
             font-weight: 300;
             color: var(--text-main);
             margin: 0;
             line-height: 1;
         }
 
-        /* TECLADO: Reducido a 60% para asegurar que NO haya scroll */
+        /* TECLADO: Ocupa el 65% inferior */
         .grid {
-            height: 60svh; 
             display: grid;
             grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(5, 1fr);
             gap: 10px;
-            padding: 10px 16px;
+            padding: 5px 16px 15px 16px; /* Padding controlado */
             width: 100%;
-            max-width: 450px;
+            max-width: 500px;
             margin: 0 auto;
         }
 
         button {
             border: none;
-            border-radius: 28px;
+            border-radius: 30px;
             width: 100%;
-            height: 100%; /* Se estira solo lo necesario según el grid */
-            font-size: 22px;
+            height: 100%; /* Se adapta a la celda del grid */
+            font-size: 24px;
             cursor: pointer;
             display: flex;
             align-items: center;
@@ -94,7 +98,7 @@
         }
 
         .btn-func { background-color: var(--btn-func); }
-        .btn-op { background-color: var(--btn-op); color: var(--accent); font-size: 26px; }
+        .btn-op { background-color: var(--btn-op); color: var(--accent); font-size: 28px; }
         .btn-equal { 
             background-color: #004a77 !important; 
             color: #ffffff !important; 
@@ -102,23 +106,24 @@
             border-radius: 30px;
         }
 
-        button:active { filter: brightness(0.9); transform: scale(0.96); }
+        button:active { filter: brightness(0.9); transform: scale(0.95); }
 
-        /* CONTROL INVISIBLE */
-        #btn-back-menu { position: absolute; top: 0; right: 0; width: 80px; height: 80px; z-index: 100; }
-        #btn-config { position: absolute; top: 0; left: 0; width: 80px; height: 80px; z-index: 100; }
-        #magic-indicator { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); width: 30px; height: 2px; background: var(--text-main); opacity: 0; }
+        /* ZONAS INVISIBLES */
+        #btn-back-menu { position: absolute; top: 0; right: 0; width: 60px; height: 60px; z-index: 100; }
+        #btn-config { position: absolute; top: 0; left: 0; width: 60px; height: 60px; z-index: 100; }
+        #magic-indicator { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); width: 30px; height: 3px; background: var(--text-main); border-radius: 5px; opacity: 0; }
 
-        /* PANEL ADMIN */
+        /* ADMIN PANEL */
         #admin-panel { 
             display: none; position: absolute; top: 15%; left: 50%; transform: translateX(-50%);
             background: var(--btn-func); padding: 25px; border-radius: 30px; z-index: 200; width: 85%;
             box-shadow: 0 10px 40px rgba(0,0,0,0.4); text-align: center;
+            touch-action: auto; /* Permitir interacción aquí */
         }
         #admin-panel input { width: 100%; padding: 12px; border-radius: 10px; border: none; margin-bottom: 12px; font-size: 18px; text-align: center; color: #000; }
     </style>
 </head>
-<body>
+<body scroll="no">
 
     <div id="btn-back-menu"></div>
     <div id="btn-config" onclick="abrirConfig()"></div>
@@ -163,7 +168,7 @@
     </div>
 
     <script>
-        // La lógica de JavaScript se mantiene intacta para el truco de forzaje.
+        // La lógica de JavaScript permanece igual para asegurar el éxito del efecto.
         let currentInput = "0", previousInput = "", operation = null;
         let n1 = 0, n2 = 0, tn = 0, modoMagico = false, contadorOps = 0;
         let digitosDif = [], idxDif = 0, clicksPorc = 0;
@@ -172,7 +177,7 @@
 
         function updateScreen() {
             screen.innerText = currentInput;
-            screen.style.fontSize = currentInput.length > 8 ? "40px" : "clamp(50px, 14vw, 80px)";
+            screen.style.fontSize = currentInput.length > 8 ? "45px" : "clamp(50px, 15vw, 85px)";
         }
 
         function numClick(val) {
@@ -265,7 +270,7 @@
         }
 
         let tBack;
-        document.getElementById('btn-back-menu').addEventListener('touchstart', () => {
+        document.getElementById('btn-back-menu').addEventListener('touchstart', (e) => {
             tBack = setTimeout(() => { window.location.href = 'index.html'; }, 2000);
         });
         document.getElementById('btn-back-menu').addEventListener('touchend', () => clearTimeout(tBack));
