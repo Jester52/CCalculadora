@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Calculadora">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Calculadora</title>
     <style>
@@ -33,93 +36,88 @@
         }
         
         html, body {
-            height: 100%;
-            width: 100%;
+            height: 100svh;
+            width: 100vw;
             margin: 0;
             padding: 0;
             overflow: hidden;
             background-color: var(--bg-android);
             position: fixed;
             font-family: 'Roboto', sans-serif;
-            overscroll-behavior: none;
         }
 
-        /* CONTENEDOR MAESTRO */
-        .wrapper {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+        /* CAPA MAESTRA PARA CENTRAR TODO */
+        .safe-area {
+            height: 100svh;
+            width: 100vw;
             display: flex;
             flex-direction: column;
-            padding-bottom: env(safe-area-inset-bottom);
+            justify-content: flex-end; /* Todo se apila abajo */
+            padding-bottom: calc(env(safe-area-inset-bottom) + 20px);
         }
 
-        /* VISOR: Más compacto */
+        /* VISOR MÁS PEQUEÑO Y BAJO */
         .display {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-end;
-            align-items: flex-end;
-            padding: 10px 35px;
+            width: 100%;
+            padding: 0 40px 10px 40px;
+            text-align: right;
         }
 
         #screen {
-            font-size: clamp(40px, 14vw, 75px);
+            font-size: 55px; /* Tamaño fijo, no elástico */
             font-weight: 300;
             color: var(--text-main);
             margin: 0;
-            line-height: 1.2;
         }
 
-        /* TECLADO: Reducido al 55% de la pantalla para evitar scroll */
+        /* TECLADO CON TAMAÑO FIJO CONTROLADO */
         .numpad {
-            height: 55%; 
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            grid-template-rows: repeat(5, 1fr);
             gap: 12px;
-            padding: 10px 24px 20px 24px; /* Más margen lateral para reducir botones */
+            padding: 0 25px;
             width: 100%;
-            max-width: 450px; /* Ancho máximo para que no se vea gigante en tablets */
+            max-width: 420px; /* Limitamos el ancho */
             margin: 0 auto;
         }
 
         button {
             border: none;
-            border-radius: 35px; /* Forma de pastilla perfecta */
+            border-radius: 50%; /* Botones circulares estilo Android antiguo/clásico ocupan menos espacio */
+            width: 70px; /* TAMAÑO FIJO */
+            height: 70px; /* TAMAÑO FIJO */
+            margin: 0 auto;
             font-size: 22px;
             background-color: var(--btn-num);
             color: var(--text-main);
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: opacity 0.1s, transform 0.1s;
         }
 
-        .btn-func { background-color: var(--btn-func); }
         .btn-op { background-color: var(--btn-op); color: var(--accent); font-size: 26px; }
+        .btn-func { background-color: var(--btn-func); }
         .btn-equal { 
             background-color: #004a77 !important; 
             color: #ffffff !important; 
             grid-row: span 2; 
+            height: 152px; /* 70 + 70 + 12 gap */
+            border-radius: 40px;
         }
 
-        button:active { opacity: 0.7; transform: scale(0.92); }
+        button:active { filter: brightness(0.85); transform: scale(0.92); }
 
-        /* ZONAS INVISIBLES DE CONTROL */
-        #secret-exit { position: absolute; top: 0; right: 0; width: 60px; height: 60px; z-index: 100; }
-        #secret-config { position: absolute; top: 0; left: 0; width: 60px; height: 60px; z-index: 100; }
+        /* SALIDAS SECRETAS */
+        #exit-btn { position: absolute; top: 0; right: 0; width: 60px; height: 60px; z-index: 100; }
+        #config-btn { position: absolute; top: 0; left: 0; width: 60px; height: 60px; z-index: 100; }
     </style>
 </head>
 <body>
 
-    <div id="secret-exit"></div>
-    <div id="secret-config" onclick="abrirConfig()"></div>
+    <div id="exit-btn"></div>
+    <div id="config-btn" onclick="abrirConfig()"></div>
 
-    <div class="wrapper">
+    <div class="safe-area">
         <div class="display">
             <div id="screen">0</div>
         </div>
@@ -152,6 +150,7 @@
     </div>
 
     <script>
+        // Lógica de forzado Cronos
         let cur = "0", pre = "", oper = null;
         let n1 = 0, n2 = 0, magicMode = false, step = 0;
         let diffArr = [], diffIdx = 0, mClicks = 0;
@@ -215,10 +214,10 @@
         }
 
         let t;
-        document.getElementById('secret-exit').addEventListener('touchstart', () => {
+        document.getElementById('exit-btn').addEventListener('touchstart', () => {
             t = setTimeout(() => window.location.href='index.html', 2000);
         });
-        document.getElementById('secret-exit').addEventListener('touchend', () => clearTimeout(t));
+        document.getElementById('exit-btn').addEventListener('touchend', () => clearTimeout(t));
     </script>
 </body>
 </html>
