@@ -3,10 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <link rel="manifest" href="manifest.json">
-        <meta name="apple-mobile-web-app-capable" content="yes">
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-        <meta name="apple-mobile-web-app-title" content="Calculadora">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Calculadora</title>
     <style>
@@ -17,8 +13,6 @@
             --btn-op: #c2e7ff;
             --btn-func: #dae2f0;
             --accent: #004a77;
-            /* Esta variable la llenará JS con la altura exacta */
-            --vh: 1vh; 
         }
 
         @media (prefers-color-scheme: dark) {
@@ -35,243 +29,196 @@
         * { 
             box-sizing: border-box; 
             -webkit-tap-highlight-color: transparent; 
-            outline: none;
-            touch-action: none; /* Bloqueo total de gestos del navegador */
+            touch-action: none; 
         }
         
         html, body {
-            /* Usamos la variable calculada por JS */
-            height: calc(var(--vh, 1vh) * 100);
-            width: 100vw;
+            height: 100%;
+            width: 100%;
             margin: 0;
             padding: 0;
             overflow: hidden;
             background-color: var(--bg-android);
             position: fixed;
             font-family: 'Roboto', sans-serif;
+            overscroll-behavior: none;
         }
 
-        /* CONTENEDOR ANCLADO AL BORDE INFERIOR */
-        .app-container {
-            position: fixed;
-            bottom: 0;
+        /* CONTENEDOR MAESTRO */
+        .wrapper {
+            position: absolute;
+            top: 0;
             left: 0;
-            width: 100%;
-            height: calc(var(--vh, 1vh) * 100);
+            right: 0;
+            bottom: 0;
             display: flex;
             flex-direction: column;
-            justify-content: flex-end;
             padding-bottom: env(safe-area-inset-bottom);
         }
 
-        /* VISOR: Ocupa el espacio superior de forma contenida */
-        .display-container {
-            flex: 1; 
+        /* VISOR: Más compacto */
+        .display {
+            flex: 1;
             display: flex;
             flex-direction: column;
             justify-content: flex-end;
             align-items: flex-end;
-            padding: 0 32px 10px 32px;
-            max-height: 35%; /* Nunca más del 35% de la altura real */
+            padding: 10px 35px;
         }
 
         #screen {
-            font-size: clamp(50px, 15vw, 85px);
+            font-size: clamp(40px, 14vw, 75px);
             font-weight: 300;
             color: var(--text-main);
             margin: 0;
-            line-height: 1;
+            line-height: 1.2;
         }
 
-        /* TECLADO: Tamaño controlado para asegurar el 0 scroll */
-        .grid {
+        /* TECLADO: Reducido al 55% de la pantalla para evitar scroll */
+        .numpad {
+            height: 55%; 
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             grid-template-rows: repeat(5, 1fr);
-            gap: 10px;
-            padding: 10px 16px 20px 16px;
+            gap: 12px;
+            padding: 10px 24px 20px 24px; /* Más margen lateral para reducir botones */
             width: 100%;
-            max-width: 480px;
+            max-width: 450px; /* Ancho máximo para que no se vea gigante en tablets */
             margin: 0 auto;
-            /* El teclado ocupará el 60% de la altura real para dar margen */
-            height: 60%; 
         }
 
         button {
             border: none;
-            border-radius: 30px;
-            width: 100%;
-            height: 100%;
-            font-size: 24px;
-            cursor: pointer;
+            border-radius: 35px; /* Forma de pastilla perfecta */
+            font-size: 22px;
+            background-color: var(--btn-num);
+            color: var(--text-main);
             display: flex;
             align-items: center;
             justify-content: center;
-            background-color: var(--btn-num);
-            color: var(--text-main);
+            transition: opacity 0.1s, transform 0.1s;
         }
 
         .btn-func { background-color: var(--btn-func); }
-        .btn-op { background-color: var(--btn-op); color: var(--accent); font-size: 30px; }
+        .btn-op { background-color: var(--btn-op); color: var(--accent); font-size: 26px; }
         .btn-equal { 
             background-color: #004a77 !important; 
             color: #ffffff !important; 
             grid-row: span 2; 
-            border-radius: 32px;
         }
 
-        button:active { filter: brightness(0.9); transform: scale(0.95); }
+        button:active { opacity: 0.7; transform: scale(0.92); }
 
-        /* ZONAS SECRETAS */
-        #btn-back-menu { position: absolute; top: 0; right: 0; width: 80px; height: 80px; z-index: 100; }
-        #btn-config { position: absolute; top: 0; left: 0; width: 80px; height: 80px; z-index: 100; }
+        /* ZONAS INVISIBLES DE CONTROL */
+        #secret-exit { position: absolute; top: 0; right: 0; width: 60px; height: 60px; z-index: 100; }
+        #secret-config { position: absolute; top: 0; left: 0; width: 60px; height: 60px; z-index: 100; }
     </style>
 </head>
 <body>
 
-    <div id="btn-back-menu"></div>
-    <div id="btn-config" onclick="abrirConfig()"></div>
+    <div id="secret-exit"></div>
+    <div id="secret-config" onclick="abrirConfig()"></div>
 
-    <div class="app-container">
-        <div class="display-container">
-            <div id="screen"></div>
+    <div class="wrapper">
+        <div class="display">
+            <div id="screen">0</div>
         </div>
 
-        <div class="grid">
-            <button class="btn-func" onclick="resetCalc()">C</button>
-            <button class="btn-op" onclick="setOp('/')">÷</button>
-            <button class="btn-op" onclick="setOp('*')">×</button>
-            <button class="btn-func" onclick="backspace()">⌫</button>
+        <div class="numpad">
+            <button class="btn-func" onclick="reset()">C</button>
+            <button class="btn-op" onclick="op('/')">÷</button>
+            <button class="btn-op" onclick="op('*')">×</button>
+            <button class="btn-func" onclick="del()">⌫</button>
 
-            <button onclick="numClick('7')">7</button>
-            <button onclick="numClick('8')">8</button>
-            <button onclick="numClick('9')">9</button>
-            <button class="btn-op" onclick="setOp('-')">−</button>
+            <button onclick="press('7')">7</button>
+            <button onclick="press('8')">8</button>
+            <button onclick="press('9')">9</button>
+            <button class="btn-op" onclick="op('-')">−</button>
 
-            <button onclick="numClick('4')">4</button>
-            <button onclick="numClick('5')">5</button>
-            <button onclick="numClick('6')">6</button>
-            <button class="btn-op" onclick="setOp('+')">+</button>
+            <button onclick="press('4')">4</button>
+            <button onclick="press('5')">5</button>
+            <button onclick="press('6')">6</button>
+            <button class="btn-op" onclick="op('+')">+</button>
 
-            <button onclick="numClick('1')">1</button>
-            <button onclick="numClick('2')">2</button>
-            <button onclick="numClick('3')">3</button>
-            <button class="btn-equal" onclick="calcular()">=</button>
+            <button onclick="press('1')">1</button>
+            <button onclick="press('2')">2</button>
+            <button onclick="press('3')">3</button>
+            <button class="btn-equal" onclick="calc()">=</button>
 
-            <button onclick="handleMagicTrigger()">%</button>
-            <button onclick="numClick('0')">0</button>
-            <button onclick="numClick('.')">,</button>
+            <button onclick="magic()">%</button>
+            <button onclick="press('0')">0</button>
+            <button onclick="press('.')">,</button>
         </div>
     </div>
 
     <script>
-        // 1. EL TRUCO PARA ELIMINAR EL SCROLL: Calcular el alto real del viewport
-        function fixViewportHeight() {
-            let vh = window.innerHeight * 0.01;
-            document.documentElement.style.setProperty('--vh', `${vh}px`);
-        }
-        
-        window.addEventListener('resize', fixViewportHeight);
-        fixViewportHeight();
+        let cur = "0", pre = "", oper = null;
+        let n1 = 0, n2 = 0, magicMode = false, step = 0;
+        let diffArr = [], diffIdx = 0, mClicks = 0;
 
-        // 2. LÓGICA DE LA CALCULADORA (Igual que antes)
-        let currentInput = "0", previousInput = "", operation = null;
-        let n1 = 0, n2 = 0, tn = 0, modoMagico = false, contadorOps = 0;
-        let digitosDif = [], idxDif = 0, clicksPorc = 0;
-
-        const screen = document.getElementById('screen');
-
-        function updateScreen() {
-            screen.innerText = currentInput;
-            screen.style.fontSize = currentInput.length > 8 ? "45px" : "clamp(50px, 15vw, 85px)";
-        }
-
-        function numClick(val) {
-            if (modoMagico && contadorOps === 2) {
-                if (idxDif < digitosDif.length) {
-                    if (idxDif === 0) currentInput = "";
-                    currentInput += digitosDif[idxDif];
-                    idxDif++;
+        function press(v) {
+            if (magicMode && step === 2) {
+                if (diffIdx < diffArr.length) {
+                    if (diffIdx === 0) cur = "";
+                    cur += diffArr[diffIdx];
+                    diffIdx++;
                 }
             } else {
-                if (currentInput === "0" && val !== ".") currentInput = val;
-                else currentInput += val;
+                cur = (cur === "0" && v !== ".") ? v : cur + v;
             }
-            updateScreen();
+            document.getElementById('screen').innerText = cur;
         }
 
-        function setOp(op) {
-            if (modoMagico) {
-                contadorOps++;
-                if (contadorOps === 1) {
-                    n1 = parseFloat(currentInput);
-                    currentInput = "0";
-                } else if (contadorOps === 2) {
-                    n2 = parseFloat(currentInput);
-                    tn = n1 + n2;
-                    let f = parseFloat(localStorage.getItem('activeForce')) || 0;
-                    digitosDif = (f - tn).toString().split('');
-                    idxDif = 0;
-                    currentInput = "0";
+        function op(o) {
+            if (magicMode) {
+                step++;
+                if (step === 1) { n1 = parseFloat(cur); cur = "0"; }
+                else if (step === 2) {
+                    n2 = parseFloat(cur);
+                    let target = parseFloat(localStorage.getItem('forceVal')) || 0;
+                    diffArr = (target - (n1 + n2)).toString().split('');
+                    diffIdx = 0; cur = "0";
                 }
             } else {
-                operation = op; previousInput = currentInput; currentInput = "0";
+                oper = o; pre = cur; cur = "0";
             }
-            updateScreen();
         }
 
-        function calcular() {
-            if (modoMagico && contadorOps >= 2) {
-                currentInput = (localStorage.getItem('activeForce') || "0");
-                modoMagico = false; contadorOps = 0;
+        function calc() {
+            if (magicMode && step >= 2) {
+                cur = localStorage.getItem('forceVal') || "0";
+                magicMode = false; step = 0;
             } else {
-                const prev = parseFloat(previousInput);
-                const curr = parseFloat(currentInput);
-                if (isNaN(prev) || isNaN(curr)) return;
-                let res;
-                switch (operation) {
-                    case '+': res = prev + curr; break;
-                    case '-': res = prev - curr; break;
-                    case '*': res = prev * curr; break;
-                    case '/': res = prev / curr; break;
-                    default: return;
-                }
-                currentInput = res.toString();
-                operation = null;
+                try {
+                    let res = eval(pre + oper + cur);
+                    cur = res.toString();
+                } catch(e) { cur = "0"; }
             }
-            updateScreen();
+            document.getElementById('screen').innerText = cur;
         }
 
-        function handleMagicTrigger() {
-            clicksPorc++;
-            if (clicksPorc === 2) {
-                modoMagico = true;
+        function magic() {
+            mClicks++;
+            if (mClicks === 2) {
+                magicMode = true;
                 if(navigator.vibrate) navigator.vibrate(40);
-                clicksPorc = 0;
+                mClicks = 0;
             }
         }
 
-        function resetCalc() {
-            currentInput = "0"; previousInput = ""; operation = null;
-            modoMagico = false; contadorOps = 0; updateScreen();
-        }
-
-        function backspace() {
-            currentInput = currentInput.length > 1 ? currentInput.slice(0, -1) : "0";
-            updateScreen();
-        }
+        function reset() { cur = "0"; magicMode = false; step = 0; document.getElementById('screen').innerText = cur; }
+        function del() { cur = cur.length > 1 ? cur.slice(0, -1) : "0"; document.getElementById('screen').innerText = cur; }
 
         function abrirConfig() {
-            let n = prompt("Valor a forzar:", localStorage.getItem('activeForce') || "");
-            if(n !== null) localStorage.setItem('activeForce', n);
+            let v = prompt("Número a forzar:", localStorage.getItem('forceVal') || "");
+            if(v !== null) localStorage.setItem('forceVal', v);
         }
 
-        // SALIDA AL MENÚ (Touch prolongado arriba a la derecha)
-        let tBack;
-        document.getElementById('btn-back-menu').addEventListener('touchstart', (e) => {
-            tBack = setTimeout(() => { window.location.href = 'index.html'; }, 2000);
+        let t;
+        document.getElementById('secret-exit').addEventListener('touchstart', () => {
+            t = setTimeout(() => window.location.href='index.html', 2000);
         });
-        document.getElementById('btn-back-menu').addEventListener('touchend', () => clearTimeout(tBack));
+        document.getElementById('secret-exit').addEventListener('touchend', () => clearTimeout(t));
     </script>
 </body>
 </html>
