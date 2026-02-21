@@ -12,6 +12,8 @@
             --btn-op: #c2e7ff;
             --btn-func: #dae2f0;
             --accent: #004a77;
+            /* Esta variable la llenará JS con la altura exacta */
+            --vh: 1vh; 
         }
 
         @media (prefers-color-scheme: dark) {
@@ -25,42 +27,47 @@
             }
         }
 
-        /* BLOQUEO TOTAL DE MOVIMIENTO EXTERNO */
         * { 
             box-sizing: border-box; 
             -webkit-tap-highlight-color: transparent; 
-            outline: none; 
-            touch-action: none; /* Bloquea gestos del navegador */
+            outline: none;
+            touch-action: none; /* Bloqueo total de gestos del navegador */
         }
         
         html, body {
-            height: 100%;
-            width: 100%;
+            /* Usamos la variable calculada por JS */
+            height: calc(var(--vh, 1vh) * 100);
+            width: 100vw;
             margin: 0;
             padding: 0;
-            overflow: hidden; /* Prohibido el scroll */
+            overflow: hidden;
             background-color: var(--bg-android);
-            position: fixed; /* Anclado al viewport */
+            position: fixed;
             font-family: 'Roboto', sans-serif;
         }
 
-        /* CONTENEDOR DIVIDIDO EN PORCENTAJES EXACTOS */
+        /* CONTENEDOR ANCLADO AL BORDE INFERIOR */
         .app-container {
-            display: grid;
-            grid-template-rows: 35% 65%; /* 100% exacto */
-            height: 100vh;
-            width: 100vw;
-            overflow: hidden;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: calc(var(--vh, 1vh) * 100);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding-bottom: env(safe-area-inset-bottom);
         }
 
-        /* VISOR: Ocupa el 35% superior */
+        /* VISOR: Ocupa el espacio superior de forma contenida */
         .display-container {
+            flex: 1; 
             display: flex;
             flex-direction: column;
             justify-content: flex-end;
             align-items: flex-end;
-            padding: 0 32px 15px 32px;
-            background: transparent;
+            padding: 0 32px 10px 32px;
+            max-height: 35%; /* Nunca más del 35% de la altura real */
         }
 
         #screen {
@@ -71,23 +78,25 @@
             line-height: 1;
         }
 
-        /* TECLADO: Ocupa el 65% inferior */
+        /* TECLADO: Tamaño controlado para asegurar el 0 scroll */
         .grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             grid-template-rows: repeat(5, 1fr);
             gap: 10px;
-            padding: 5px 16px 15px 16px; /* Padding controlado */
+            padding: 10px 16px 20px 16px;
             width: 100%;
-            max-width: 500px;
+            max-width: 480px;
             margin: 0 auto;
+            /* El teclado ocupará el 60% de la altura real para dar margen */
+            height: 60%; 
         }
 
         button {
             border: none;
             border-radius: 30px;
             width: 100%;
-            height: 100%; /* Se adapta a la celda del grid */
+            height: 100%;
             font-size: 24px;
             cursor: pointer;
             display: flex;
@@ -98,42 +107,25 @@
         }
 
         .btn-func { background-color: var(--btn-func); }
-        .btn-op { background-color: var(--btn-op); color: var(--accent); font-size: 28px; }
+        .btn-op { background-color: var(--btn-op); color: var(--accent); font-size: 30px; }
         .btn-equal { 
             background-color: #004a77 !important; 
             color: #ffffff !important; 
             grid-row: span 2; 
-            border-radius: 30px;
+            border-radius: 32px;
         }
 
         button:active { filter: brightness(0.9); transform: scale(0.95); }
 
-        /* ZONAS INVISIBLES */
-        #btn-back-menu { position: absolute; top: 0; right: 0; width: 60px; height: 60px; z-index: 100; }
-        #btn-config { position: absolute; top: 0; left: 0; width: 60px; height: 60px; z-index: 100; }
-        #magic-indicator { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); width: 30px; height: 3px; background: var(--text-main); border-radius: 5px; opacity: 0; }
-
-        /* ADMIN PANEL */
-        #admin-panel { 
-            display: none; position: absolute; top: 15%; left: 50%; transform: translateX(-50%);
-            background: var(--btn-func); padding: 25px; border-radius: 30px; z-index: 200; width: 85%;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.4); text-align: center;
-            touch-action: auto; /* Permitir interacción aquí */
-        }
-        #admin-panel input { width: 100%; padding: 12px; border-radius: 10px; border: none; margin-bottom: 12px; font-size: 18px; text-align: center; color: #000; }
+        /* ZONAS SECRETAS */
+        #btn-back-menu { position: absolute; top: 0; right: 0; width: 80px; height: 80px; z-index: 100; }
+        #btn-config { position: absolute; top: 0; left: 0; width: 80px; height: 80px; z-index: 100; }
     </style>
 </head>
-<body scroll="no">
+<body>
 
     <div id="btn-back-menu"></div>
     <div id="btn-config" onclick="abrirConfig()"></div>
-    <div id="magic-indicator"></div>
-
-    <div id="admin-panel">
-        <h3 style="margin-top:0; color:var(--text-main)">FORZAR</h3>
-        <input type="number" id="valForzado" placeholder="0000">
-        <button onclick="cerrarConfig()" style="width:100%; background:var(--accent); color:white; height:45px; border-radius:12px; border:none;">GUARDAR</button>
-    </div>
 
     <div class="app-container">
         <div class="display-container">
@@ -168,7 +160,16 @@
     </div>
 
     <script>
-        // La lógica de JavaScript permanece igual para asegurar el éxito del efecto.
+        // 1. EL TRUCO PARA ELIMINAR EL SCROLL: Calcular el alto real del viewport
+        function fixViewportHeight() {
+            let vh = window.innerHeight * 0.01;
+            document.documentElement.style.setProperty('--vh', `${vh}px`);
+        }
+        
+        window.addEventListener('resize', fixViewportHeight);
+        fixViewportHeight();
+
+        // 2. LÓGICA DE LA CALCULADORA (Igual que antes)
         let currentInput = "0", previousInput = "", operation = null;
         let n1 = 0, n2 = 0, tn = 0, modoMagico = false, contadorOps = 0;
         let digitosDif = [], idxDif = 0, clicksPorc = 0;
@@ -209,9 +210,7 @@
                     currentInput = "0";
                 }
             } else {
-                operation = op;
-                previousInput = currentInput;
-                currentInput = "0";
+                operation = op; previousInput = currentInput; currentInput = "0";
             }
             updateScreen();
         }
@@ -219,9 +218,7 @@
         function calcular() {
             if (modoMagico && contadorOps >= 2) {
                 currentInput = (localStorage.getItem('activeForce') || "0");
-                document.getElementById('magic-indicator').style.opacity = "0";
-                modoMagico = false;
-                contadorOps = 0;
+                modoMagico = false; contadorOps = 0;
             } else {
                 const prev = parseFloat(previousInput);
                 const curr = parseFloat(currentInput);
@@ -244,7 +241,6 @@
             clicksPorc++;
             if (clicksPorc === 2) {
                 modoMagico = true;
-                document.getElementById('magic-indicator').style.opacity = "0.2";
                 if(navigator.vibrate) navigator.vibrate(40);
                 clicksPorc = 0;
             }
@@ -252,9 +248,7 @@
 
         function resetCalc() {
             currentInput = "0"; previousInput = ""; operation = null;
-            modoMagico = false; contadorOps = 0;
-            document.getElementById('magic-indicator').style.opacity = "0";
-            updateScreen();
+            modoMagico = false; contadorOps = 0; updateScreen();
         }
 
         function backspace() {
@@ -262,13 +256,12 @@
             updateScreen();
         }
 
-        function abrirConfig() { document.getElementById('admin-panel').style.display = 'block'; }
-        function cerrarConfig() {
-            let val = document.getElementById('valForzado').value;
-            if(val) localStorage.setItem('activeForce', val);
-            document.getElementById('admin-panel').style.display = 'none';
+        function abrirConfig() {
+            let n = prompt("Valor a forzar:", localStorage.getItem('activeForce') || "");
+            if(n !== null) localStorage.setItem('activeForce', n);
         }
 
+        // SALIDA AL MENÚ (Touch prolongado arriba a la derecha)
         let tBack;
         document.getElementById('btn-back-menu').addEventListener('touchstart', (e) => {
             tBack = setTimeout(() => { window.location.href = 'index.html'; }, 2000);
