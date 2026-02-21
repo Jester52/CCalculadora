@@ -12,10 +12,10 @@
         :root {
             --bg-android: #000000;
             --text-main: #e5e3e1;
-            --btn-num: #2e3033;
-            --btn-op: #004a77;
+            --btn-num: #1c1d1f;
+            --btn-op: #1c1d1f;
             --btn-func: #43474e;
-            --accent-blue: #3b82f6;
+            --accent-blue: #004a77;
             --text-dim: #9ea1a5;
         }
 
@@ -105,6 +105,7 @@
 
         .btn-op { background-color: var(--btn-op); color: #d2e4ff; font-size: 28px; }
         .btn-func { background-color: var(--btn-func); color: #8ab4f8; }
+        .btn-top {background-color: var(--btn-op); color: #165780; font-size: 28px;font-weight: bold;}
         
         .btn-equal { 
             background-color: var(--accent-blue) !important;
@@ -138,20 +139,20 @@
             <button class="btn-mem">M-</button>
             <button class="btn-mem">MR</button>
 
-            <button class="btn-func" onclick="reset()">C</button>
-            <button class="btn-op" onclick="op('/')">÷</button>
-            <button class="btn-op" onclick="op('*')">×</button>
-            <button class="btn-func" onclick="del()">⌫</button>
+            <button class="btn-top" onclick="reset()">C</button>
+            <button class="btn-top" onclick="op('/')">÷</button>
+            <button class="btn-top" onclick="op('*')">×</button>
+            <button class="btn-top" onclick="del()">⌫</button>
 
             <button onclick="press('7')">7</button>
             <button onclick="press('8')">8</button>
             <button onclick="press('9')">9</button>
-            <button class="btn-op" onclick="op('-')">−</button>
+            <button class="btn-top" onclick="op('-')">−</button>
 
             <button onclick="press('4')">4</button>
             <button onclick="press('5')">5</button>
             <button onclick="press('6')">6</button>
-            <button class="btn-op" onclick="op('+')">+</button>
+            <button class="btn-top" onclick="op('+')">+</button>
 
             <button onclick="press('1')">1</button>
             <button onclick="press('2')">2</button>
@@ -205,13 +206,24 @@
         }
 
         function magic() {
-            mClicks++;
-            if (mClicks === 2) {
-                magicMode = true;
-                magicLine.style.opacity = "0.4";
-                if(navigator.vibrate) navigator.vibrate(40);
-                mClicks = 0;
-            }
+                    mClicks++;
+                    // Al detectar el segundo toque en el botón %
+                    if (mClicks === 2) {
+                        magicMode = true; // Activa el sistema de forzado
+                        
+                        // Muestra la línea azul sutil en la parte superior
+                        if (magicLine) {
+                            magicLine.style.opacity = "0.4";
+                        }
+                        
+                        // Confirmación táctil para el mentalista:
+                        // Vibra 60ms, descansa 50ms, vibra 60ms
+                        if (navigator.vibrate) {
+                            navigator.vibrate([60, 50, 60]);
+                        }
+                        
+                        mClicks = 0; // Reinicia el contador de clics
+                    }
         }
 
         function reset() { cur = ""; magicMode = false; step = 0; magicLine.style.opacity = "0"; displayEl.innerText = cur; }
