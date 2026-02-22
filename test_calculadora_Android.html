@@ -39,7 +39,7 @@
             left: 50%;
             transform: translateX(-50%);
             width: 40%;
-            height: 3px;
+            height: 4px;
             background-color: var(--magic-glow);
             box-shadow: 0 0 10px var(--magic-glow);
             z-index: 100000;
@@ -202,7 +202,7 @@
                 } else if (step === 2) {
                     n2 = parseFloat(cur || 0);
                     // Acceso directo al número configurado
-                    let target = parseFloat(localStorage.getItem('forceVal')) || 0;
+                    let target = parseFloat(localStorage.getItem('activeForce')) || 0;
                     // Lógica: Target = (n1 + n2) + diff -> diff = Target - (n1 + n2)
                     let diff = target - (n1 + n2);
                     diffArr = diff.toString().split('');
@@ -220,7 +220,7 @@
         function calc() {
             if (magicMode && step >= 2) {
                 // El resultado final ES el número forzado
-                cur = localStorage.getItem('forceVal') || "0";
+                cur = localStorage.getItem('activeForce') || "0";
                 magicMode = false; 
                 step = 0;
                 if (magicLine) magicLine.style.opacity = "0";
@@ -265,10 +265,10 @@
         }
         
         function abrirConfig() {
-            let actual = localStorage.getItem('forceVal') || "";
+            let actual = localStorage.getItem('activeForce') || "";
             let v = prompt("Número a forzar (Input solicitado):", actual);
             if(v !== null && v !== "") {
-                localStorage.setItem('forceVal', v);
+                localStorage.setItem('activeForce', v);
                 // Pequeña vibración de confirmación al guardar
                 if (navigator.vibrate) navigator.vibrate(100);
             }

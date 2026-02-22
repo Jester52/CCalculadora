@@ -2,93 +2,99 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Calculadora</title>
-    
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#f7f9fc" media="(prefers-color-scheme: light)">
-    <meta name="theme-color" content="#1a1c1e" media="(prefers-color-scheme: dark)">
-
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Calculadora">
-    
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Calculadora Pro Dual</title>
+    <title>Calculadora Pro</title>
     <style>
-        :root { --bg-color: #000; --text-color: #fff; --btn-gray: #333; --btn-light: #838282; --btn-orange: #ff9f0a; }
+        :root { --bg-color: #000; --text-color: #fff; --btn-gray: #333; --btn-light: #a5a5a5; --btn-orange: #ff9f0a; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
-        body { background-color: var(--bg-color); color: var(--text-color); font-family: -apple-system, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; overflow: hidden; }
+        
+        html, body { 
+            background-color: var(--bg-color); 
+            color: var(--text-color); 
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            margin: 0; padding: 0; height: 100%; width: 100%;
+            overflow: hidden; position: fixed;
+        }
 
-        /* Panel Oculto */
-        #admin-panel { display: none; position: absolute; top: 20%; background: #222; padding: 20px; border-radius: 15px; z-index: 100; border: 1px solid #444; width: 280px; text-align: center; box-shadow: 0 0 20px rgba(0,0,0,0.8); }
-        #admin-panel input { width: 100%; padding: 10px; margin: 10px 0; border-radius: 5px; border: none; font-size: 16px; background: #444; color: white; }
-        
-        #magic-indicator { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); width: 35px; height: 3px; background: #333; border-radius: 5px; opacity: 0; transition: opacity 0.3s; }
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            height: 100vh;
+            padding-bottom: calc(env(safe-area-inset-bottom) + 20px);
+        }
 
-        .calculator { width: 100%; max-width: 350px; padding: 20px; }
-        .display { height: 120px; display: flex; flex-direction: column; justify-content: flex-end; align-items: flex-end; padding: 10px 20px; font-size: 75px; font-weight: 300; white-space: nowrap; overflow: hidden; }
-        
-        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
-        button { border: none; border-radius: 50%; width: 72px; height: 72px; font-size: 30px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: brightness 0.1s; }
-        button:active { filter: brightness(1.6); }
-        
+        .display {
+            padding: 0 30px 10px 30px;
+            text-align: right;
+            font-size: 90px;
+            font-weight: 300;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px;
+            padding: 0 18px;
+        }
+
+        button {
+            border: none;
+            border-radius: 50%;
+            aspect-ratio: 1 / 1;
+            font-size: 34px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        button:active { filter: brightness(1.5); }
+
         .btn-num { background-color: var(--btn-gray); color: white; }
-        .btn-spec { background-color: var(--btn-light); color: white; font-size: 24px; }
-        .btn-op { background-color: var(--btn-orange); color: white; font-size: 35px; }
-        .btn-zero { grid-column: span 2; width: 156px; border-radius: 40px; justify-content: flex-start; padding-left: 28px; }
+        .btn-spec { background-color: var(--btn-light); color: black; font-size: 28px; }
+        .btn-op { background-color: var(--btn-orange); color: white; font-size: 40px; }
+        .btn-zero { grid-column: span 2; aspect-ratio: auto; border-radius: 100px; justify-content: flex-start; padding-left: 30px; }
+
+        /* Panel Config */
+        #admin-panel { display: none; position: absolute; top: 15%; left: 50%; transform: translateX(-50%); background: #222; padding: 20px; border-radius: 20px; z-index: 1000; width: 80%; border: 1px solid #444; text-align: center; }
+        #admin-panel input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: none; font-size: 18px; }
+
+        #magic-indicator { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 60px; height: 4px; background: #333; opacity: 0; transition: 0.3s; }
     </style>
 </head>
 <body>
-<!-- Volver al menú -->
-    <div id="btn-back-menu" style="
-        position: absolute; 
-        top: 0; 
-        right: 0; 
-        width: 30%; 
-        height: 40px; 
-        z-index: 9999; 
-        background: transparent;
-        -webkit-touch-callout: none;
-        -webkit-user-select: none;
-        user-select: none;
-    "></div>
 
-    <div style="position:absolute; top:0; left:0; width:60px; height:60px;" onclick="abrirConfig()"></div>
+    <div id="magic-indicator"></div>
+    <div id="btn-back-menu" style="position: absolute; top: 0; right: 0; width: 80px; height: 80px; z-index: 999;"></div>
+    <div style="position:absolute; top:0; left:0; width:80px; height:80px; z-index:999;" onclick="abrirConfig()"></div>
 
     <div id="admin-panel">
-        <h3 style="margin:0; color:var(--btn-orange);">FORZAJE</h3>
-        <input type="number" id="valForzado" placeholder="Número a forzar (ej. 12)">
-        <button onclick="cerrarConfig()" style="width:100%; height:40px; border-radius:5px; background:var(--btn-orange); color:white; border:none; cursor:pointer; font-size: 100%; font-weight: bold;">Guardar Config</button>
+        <h2 style="margin:0; color:var(--btn-orange);">CONFIGURAR</h2>
+        <input type="number" id="valForzado" placeholder="Número">
+        <button onclick="cerrarConfig()" style="width:100%; height:45px; border-radius:10px; background:var(--btn-orange); color:white; font-size:18px; font-weight:bold; aspect-ratio: auto;">GUARDAR</button>
     </div>
 
-    <div class="calculator">
-        <div id="magic-indicator"></div>
+    <div class="app-container">
         <div class="display" id="screen">0</div>
         
         <div class="grid">
             <button class="btn-spec" onclick="backspace()">⌫</button>
             <button class="btn-spec" onclick="resetCalc()">AC</button>
             <button class="btn-spec" onclick="handleMagicTrigger()">%</button>
-            
-
             <button class="btn-op" onclick="setOp('/')">÷</button>
-            
             <button class="btn-num" onclick="numClick('7')">7</button>
             <button class="btn-num" onclick="numClick('8')">8</button>
             <button class="btn-num" onclick="numClick('9')">9</button>
             <button class="btn-op" onclick="setOp('*')">×</button>
-            
             <button class="btn-num" onclick="numClick('4')">4</button>
             <button class="btn-num" onclick="numClick('5')">5</button>
             <button class="btn-num" onclick="numClick('6')">6</button>
             <button class="btn-op" onclick="setOp('-')">-</button>
-            
             <button class="btn-num" onclick="numClick('1')">1</button>
             <button class="btn-num" onclick="numClick('2')">2</button>
             <button class="btn-num" onclick="numClick('3')">3</button>
             <button class="btn-op" onclick="setOp('+')">+</button>
-            
-
             <button class="btn-num" onclick="toggleSign()">+/-</button>
             <button class="btn-num" onclick="numClick('0')">0</button>
             <button class="btn-num" onclick="numClick('.')">,</button>
@@ -97,20 +103,24 @@
     </div>
 
     <script>
-        let currentInput = "0";
-        let previousInput = "";
-        let operation = null;
-        let n1 = 0, n2 = 0, tn = 0;
-        let numeroForzado = parseFloat(localStorage.getItem('activeForce')) || 0;
-        let modoMagico = false, contadorOps = 0;
+        let currentInput = "0", previousInput = "", operation = null;
+        let n1 = 0, n2 = 0, modoMagico = false, contadorOps = 0;
         let digitosDif = [], idxDif = 0, clicksPorc = 0;
 
-        const screen = document.getElementById('screen');
+        function updateScreen() {
+            const s = document.getElementById('screen');
+            s.innerText = currentInput;
+            s.style.fontSize = currentInput.length > 7 ? "55px" : "90px";
+        }
 
-        function abrirConfig() { document.getElementById('admin-panel').style.display = 'block'; }
-        function cerrarConfig() { 
-            numeroForzado = parseFloat(document.getElementById('valForzado').value) || 0;
-            document.getElementById('admin-panel').style.display = 'none'; 
+        function abrirConfig() {
+            document.getElementById('valForzado').value = localStorage.getItem('activeForce') || "";
+            document.getElementById('admin-panel').style.display = 'block';
+        }
+
+        function cerrarConfig() {
+            localStorage.setItem('activeForce', document.getElementById('valForzado').value);
+            document.getElementById('admin-panel').style.display = 'none';
         }
 
         function handleMagicTrigger() {
@@ -118,129 +128,75 @@
             if (clicksPorc === 2) {
                 modoMagico = true;
                 document.getElementById('magic-indicator').style.opacity = "1";
-                clicksPorc = 0;
-                if(window.navigator.vibrate) window.navigator.vibrate(50); // Vibración sutil
+                if(navigator.vibrate) navigator.vibrate(50);
             }
+            setTimeout(() => { clicksPorc = 0; }, 800);
         }
 
         function numClick(val) {
             if (modoMagico && contadorOps === 2) {
-                // Inyección mágica (Diferencia)
                 if (idxDif < digitosDif.length) {
-                    if (idxDif === 0) currentInput = ""; 
+                    if (idxDif === 0) currentInput = "";
                     currentInput += digitosDif[idxDif];
                     idxDif++;
                 }
             } else {
-                // Comportamiento Normal
                 if (currentInput === "0" && val !== ".") currentInput = val;
                 else currentInput += val;
             }
             updateScreen();
         }
 
-function setOp(op) {
-    // 1. Sincronización: Leemos el número forzado guardado en configuración justo al empezar
-    if (modoMagico) {
-        numeroForzado = parseFloat(localStorage.getItem('activeForce')) || 0;
-    }
-
-    // 2. Lógica en Modo Mágico (Interceptación de dígitos)
-    if (modoMagico) {
-        contadorOps++;
-        if (contadorOps === 1) {
-            // Guardamos el primer número (N1)
-            n1 = parseFloat(currentInput);
-            currentInput = "0";
-        } else if (contadorOps === 2) {
-            // Guardamos el segundo número (N2)
-            n2 = parseFloat(currentInput);
-            // Calculamos la suma parcial
-            tn = n1 + n2;
-            // Calculamos la diferencia necesaria para llegar al número forzado
-            let dif = numeroForzado - tn;
-            // Convertimos esa diferencia en un array de dígitos para "inyectarlos" después
-            digitosDif = dif.toString().split('');
-            idxDif = 0;
-            currentInput = "0";
+        function setOp(op) {
+            if (modoMagico) {
+                const target = parseFloat(localStorage.getItem('activeForce')) || 0;
+                contadorOps++;
+                if (contadorOps === 1) { n1 = parseFloat(currentInput); currentInput = "0"; }
+                else if (contadorOps === 2) {
+                    n2 = parseFloat(currentInput);
+                    let dif = target - (n1 + n2);
+                    digitosDif = dif.toString().split('');
+                    idxDif = 0; currentInput = "0";
+                }
+            } else {
+                operation = op; previousInput = currentInput; currentInput = "0";
+            }
+            updateScreen();
         }
-    } else {
-        // 3. Lógica Normal (Cuando no estás haciendo magia)
-        operation = op;
-        previousInput = currentInput;
-        currentInput = "0";
-    }
-    updateScreen();
-}
 
         function calcular() {
             if (modoMagico && contadorOps >= 2) {
-                currentInput = numeroForzado.toString();
+                currentInput = localStorage.getItem('activeForce') || "0";
+                modoMagico = false; contadorOps = 0;
                 document.getElementById('magic-indicator').style.opacity = "0";
-                modoMagico = false;
-                contadorOps = 0;
             } else {
-                // Lógica Normal
-                let res;
-                const prev = parseFloat(previousInput);
-                const curr = parseFloat(currentInput);
-                if (isNaN(prev) || isNaN(curr)) return;
-                switch (operation) {
-                    case '+': res = prev + curr; break;
-                    case '-': res = prev - curr; break;
-                    case '*': res = prev * curr; break;
-                    case '/': res = prev / curr; break;
-                    default: return;
-                }
+                let res = eval(previousInput + (operation || "+") + currentInput);
                 currentInput = res.toString();
                 operation = null;
             }
             updateScreen();
         }
 
-        function updateScreen() {
-            screen.innerText = currentInput.substring(0, 10);
-            // Ajuste de fuente
-            if (currentInput.length > 6) screen.style.fontSize = "50px";
-            else screen.style.fontSize = "75px";
-        }
-
         function resetCalc() {
             currentInput = "0"; previousInput = ""; operation = null;
-            contadorOps = 0; modoMagico = false;
+            modoMagico = false; contadorOps = 0;
             document.getElementById('magic-indicator').style.opacity = "0";
             updateScreen();
         }
 
+        function backspace() { 
+            currentInput = currentInput.length > 1 ? currentInput.slice(0, -1) : "0"; 
+            updateScreen(); 
+        }
+
+
         function toggleSign() { currentInput = (parseFloat(currentInput) * -1).toString(); updateScreen(); }
 
-        //Función para volver al menú
-        const btnBack = document.getElementById('btn-back-menu');
         let timerBack;
-
-        // Evento cuando se empieza a tocar (Móvil y PC)
-        btnBack.addEventListener('touchstart', startTimer);
-        btnBack.addEventListener('mousedown', startTimer);
-
-        // Evento cuando se deja de tocar
-        btnBack.addEventListener('touchend', cancelTimer);
-        btnBack.addEventListener('mouseup', cancelTimer);
-        btnBack.addEventListener('mouseleave', cancelTimer);
-
-        function startTimer(e) {
-            e.preventDefault(); // Evita menús contextuales
-            timerBack = setTimeout(() => {
-                // Vibración corta para confirmarte a ti que funcionó
-                if(window.navigator.vibrate) window.navigator.vibrate(50);
-                
-                // Volver al menú principal
-                window.location.href = 'index.html'; 
-            }, 2000); // 2000 milisegundos = 2 segundos
-        }
-
-        function cancelTimer() {
-            clearTimeout(timerBack);
-        }
+        document.getElementById('btn-back-menu').addEventListener('touchstart', () => {
+            timerBack = setTimeout(() => { window.location.href = 'index.html'; }, 2000);
+        });
+        document.getElementById('btn-back-menu').addEventListener('touchend', () => clearTimeout(timerBack));
     </script>
 </body>
 </html>
