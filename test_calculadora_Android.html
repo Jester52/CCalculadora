@@ -14,15 +14,31 @@
             --magic-glow: #7b7a7e;
         }
 
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+        * {
+            box-sizing: border-box; 
+            -webkit-tap-highlight-color: transparent; 
+            outline: none;
+            touch-action: none; 
+            }
         
         html, body {
-            height: 100%; width: 100%;
-            margin: 0; padding: 0;
+            height: 100%;
+            width: 100%;
+            margin: 0;
+            padding: 0;
             overflow: hidden;
             background-color: var(--bg-android);
-            font-family: sans-serif;
-            position: fixed;
+            font-family: 'Roboto', sans-serif;
+            position: fixed; /* Clava la pantalla */
+            touch-action: none; /* Evita que el dedo arrastre la página */
+        }
+
+        /* BLOQUEO TOTAL DE SCROLL */
+        * { 
+            box-sizing: border-box; 
+            -webkit-tap-highlight-color: transparent; 
+            outline: none;
+            touch-action: none; /* Desactiva gestos de zoom y scroll del navegador */
         }
 
         #magic-line {
@@ -32,53 +48,79 @@
         }
 
         .secret-zone {
-            position: absolute; top: 0; width: 60px; height: 60px; z-index: 1000;
+            position: absolute; top: 0;
+            width: 60px;
+            height: 60px;
+            z-index: 1000;
         }
         #config-btn { left: 0; }
         #exit-btn { right: 0; }
 
         .app-container {
-            display: flex; flex-direction: column;
-            height: 100%; width: 100%;
+            height: 100%; /* Usa el 100% real del body fixed */
+            width: 100%;
+            display: flex;
+            flex-direction: column;
         }
 
         .display {
-            flex: 1;
-            display: flex; align-items: flex-end; justify-content: flex-end;
-            padding: 10px 25px; /* Reducido padding */
+            flex: 1; /* Esto hará que el visor ocupe solo el espacio libre */
+            display: flex;
+            align-items: flex-end;
+            justify-content: flex-end;
+            padding: 15px 25px; /* Reducimos padding para ganar espacio */
+            min-height: 0; 
         }
 
+
         #screen {
-            font-size: 65px; /* Reducido de 80px a 65px */
+            font-size: 88px; /* Reducido de 75 a 60 para evitar que empuje */
             font-weight: 300;
-            color: var(--text-main); text-align: right;
+            color: var(--text-main);
+            text-align: right;
             white-space: nowrap;
             overflow: hidden;
+            /*width: 100%;*/
+            line-height: 1;
         }
 
         .numpad {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 8px; /* Reducido de 10px a 8px */
-            padding: 5px 12px 20px 12px; /* Más compacto */
+            gap: 10px; /* Gap más pequeño para compactar */
+            padding: 10px 15px 35px 15px; /* Padding inferior para alejar de la barra de Android */
             width: 100%;
-            max-height: 65%; /* Asegura que el teclado no domine toda la pantalla */
+            max-width: 500px;
+            margin: 0 auto;
+            background: var(--bg-android); /* Asegura fondo negro tras los botones */
+            
         }
 
         button {
-            border: none; border-radius: 18px; /* Menos redondeado para ahorrar espacio */
-            aspect-ratio: 1.1 / 1;
-            font-size: 24px; /* Reducido de 28px a 24px */
+            border: none;
+            border-radius: 16px; /* Bordes ligeramente menos curvos ahorran espacio visual */
+            height: 17vw; /* Altura dinámica basada en el ancho */
+            max-height: 75px; /* Límite para pantallas muy grandes */
+            font-size: 26px;
             background-color: var(--btn-num);
             color: var(--text-main);
-            display: flex; align-items: center; justify-content: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .btn-top { color: #8ab4f8; font-weight: bold; font-size: 22px; }
+
         .btn-equal { 
             background-color: var(--accent-blue) !important;
-            grid-row: span 2; aspect-ratio: auto; border-radius: 22px;
+            color: white !important;
+            grid-row: span 2;      /* Mantiene el estilo alargado de Android */
+            height: auto;          /* Deja que el grid controle la altura */
+            max-height: 150px;     /* Pero le pone un límite para que no se vea gigante */
+            font-size: 32px;       /* Tamaño del símbolo = */
+            border-radius: 28px;   /* Curvatura de las esquinas */
         }
+
         button:active { filter: brightness(1.4); }
     </style>
 </head>
@@ -94,6 +136,12 @@
         </div>
 
         <div class="numpad">
+
+            <button class="btn-mem" onclick="mem('MC')">MC</button>
+            <button class="btn-mem" onclick="mem('M+')">M+</button>
+            <button class="btn-mem" onclick="mem('M-')">M-</button>
+            <button class="btn-mem" onclick="mem('MR')">MR</button>
+
             <button class="btn-top" onclick="reset()">C</button>
             <button class="btn-top" onclick="op('/')">÷</button>
             <button class="btn-top" onclick="op('*')">×</button>
@@ -134,18 +182,21 @@
 
         function press(v) {
             if (magicMode && step === 2) {
-                // Si el truco está activo y estamos en el segundo número,
-                // escribimos la diferencia necesaria dígito a dígito.
                 if (diffIdx < diffArr.length) { 
+                    if (diffIdx === 0) cur = ""; // Limpia al empezar el truco
                     cur += diffArr[diffIdx]; 
                     diffIdx++; 
                 }
             } else { 
-                cur += v; 
+                // Si el número es 0, lo reemplazamos por el nuevo toque
+                if (cur === "0" || cur === "") {
+                    cur = v;
+                } else {
+                    cur += v;
+                }
             }
             updateDisplay(cur);
         }
-
         function op(o) {
             if (magicMode) {
                 step++;
@@ -241,6 +292,18 @@
             exitArea.addEventListener('touchend', () => clearTimeout(holdTimer));
             exitArea.addEventListener('touchcancel', () => clearTimeout(holdTimer));
         }
+
+        function mem(type) {
+            let n = parseFloat(cur);
+            if(type === 'MC') memoria = 0;
+            if(type === 'M+') memoria += n;
+            if(type === 'M-') memoria -= n;
+            if(type === 'MR') cur = memoria.toString();
+            if(navigator.vibrate) navigator.vibrate(30);
+            updateDisplay();
+        }
+
+        
     </script>
 </body>
 </html>
