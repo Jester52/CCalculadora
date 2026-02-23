@@ -3,9 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <link rel="manifest" href="manifest.json">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Calculadora</title>
     <style>
         :root {
@@ -13,115 +10,76 @@
             --text-main: #e5e3e1;
             --btn-num: #1c1d1f;
             --btn-op: #1c1d1f;
-            --btn-func: #43474e;
             --accent-blue: #004a77;
-            --text-dim: #9ea1a5;
             --magic-glow: #7b7a7e;
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
         
         html, body {
-            height: 100%;
-            width: 100%;
-            margin: 0;
-            padding: 0;
+            height: 100%; width: 100%;
+            margin: 0; padding: 0;
             overflow: hidden;
             background-color: var(--bg-android);
-            font-family: 'Roboto', sans-serif;
+            font-family: sans-serif;
             position: fixed;
         }
 
-        /* Línea Mágica de Activación */
         #magic-line {
-            position: absolute;
-            top: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 40%;
-            height: 3px;
-            background-color: var(--magic-glow);
-            box-shadow: 0 0 10px var(--magic-glow);
-            z-index: 100000;
-            opacity: 0;
-            transition: opacity 0.2s;
-            pointer-events: none;
+            position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+            width: 40%; height: 2px; background-color: var(--magic-glow);
+            z-index: 100; opacity: 0; transition: opacity 0.2s; pointer-events: none;
         }
 
-        /* Zonas Secretas de Control */
         .secret-zone {
-            position: absolute;
-            top: 0;
-            width: 80px;
-            height: 80px;
-            z-index: 100001;
-            background: rgba(255, 255, 255, 0.01);
+            position: absolute; top: 0; width: 60px; height: 60px; z-index: 1000;
         }
         #config-btn { left: 0; }
         #exit-btn { right: 0; }
 
         .app-container {
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-end;
+            display: flex; flex-direction: column;
+            height: 100%; width: 100%;
         }
 
         .display {
             flex: 1;
-            display: flex;
-            align-items: flex-end;
-            justify-content: flex-end;
-            padding: 20px 30px;
+            display: flex; align-items: flex-end; justify-content: flex-end;
+            padding: 10px 25px; /* Reducido padding */
         }
 
         #screen {
-            font-size: 75px;
+            font-size: 65px; /* Reducido de 80px a 65px */
             font-weight: 300;
-            color: var(--text-main);
-            text-align: right;
-            word-wrap: break-word;
-            min-height: 1.1em;
+            color: var(--text-main); text-align: right;
+            white-space: nowrap;
+            overflow: hidden;
         }
 
         .numpad {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 10px;
-            padding: 10px 15px calc(env(safe-area-inset-bottom) + 15px) 15px;
+            gap: 8px; /* Reducido de 10px a 8px */
+            padding: 5px 12px 20px 12px; /* Más compacto */
             width: 100%;
-            max-width: 500px;
-            margin: 0 auto;
+            max-height: 65%; /* Asegura que el teclado no domine toda la pantalla */
         }
 
         button {
-            border: none;
-            border-radius: 22px;
+            border: none; border-radius: 18px; /* Menos redondeado para ahorrar espacio */
             aspect-ratio: 1.1 / 1;
-            font-size: 26px;
+            font-size: 24px; /* Reducido de 28px a 24px */
             background-color: var(--btn-num);
             color: var(--text-main);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
         }
 
-        .btn-mem { background: transparent; color: var(--text-dim); font-size: 16px; aspect-ratio: 1.5/1; }
-        .btn-top { background-color: var(--btn-op); color: #8ab4f8; font-size: 28px; font-weight: bold; }
-        
-        /* Estilo específico para el operador cuando está activo o resaltado */
-        .btn-op-blue { color: #d2e4ff; }
-
+        .btn-top { color: #8ab4f8; font-weight: bold; font-size: 22px; }
         .btn-equal { 
             background-color: var(--accent-blue) !important;
-            color: white !important;
-            grid-row: span 2;
-            aspect-ratio: auto;
-            border-radius: 28px;
+            grid-row: span 2; aspect-ratio: auto; border-radius: 22px;
         }
-
-        button:active { filter: brightness(1.5); }
+        button:active { filter: brightness(1.4); }
     </style>
 </head>
 <body>
@@ -136,11 +94,6 @@
         </div>
 
         <div class="numpad">
-            <button class="btn-mem">MC</button>
-            <button class="btn-mem">M+</button>
-            <button class="btn-mem">M-</button>
-            <button class="btn-mem">MR</button>
-
             <button class="btn-top" onclick="reset()">C</button>
             <button class="btn-top" onclick="op('/')">÷</button>
             <button class="btn-top" onclick="op('*')">×</button>
