@@ -188,18 +188,31 @@ function lanzar(valor) {
     window.location.href = 'index.html';
 }
 
-        function forzarFechaHoy() {
-            const hoy = new Date();
-            const dia = String(hoy.getDate()).padStart(2, '0');
-            const mes = String(hoy.getMonth() + 1).padStart(2, '0');
-            const anio = String(hoy.getFullYear()).slice(-2);
-            const fechaForzada = dia + mes + anio;
-            
-            localStorage.setItem('activeForce', fechaForzada);
-            if(navigator.vibrate) navigator.vibrate([30, 50, 30]);
-            alert("Forzaje de FECHA activado: " + fechaForzada);
-            window.location.href = 'index.html';
-        }
+function forzarFechaHoy() {
+    const hoy = new Date();
+    // Obtenemos los valores
+    const dia = String(hoy.getDate()).padStart(2, '0');
+    const mes = String(hoy.getMonth() + 1).padStart(2, '0');
+    const anio = String(hoy.getFullYear()).slice(-2);
+    
+    // Concatenamos la cadena completa
+    let fechaForzada = dia + mes + anio;
+    
+    // --- LÓGICA DE LIMPIEZA DE CERO ---
+    // Si la cadena empieza por "0", eliminamos el primer carácter
+    // Esto asegura que "08..." se convierta en "8..."
+    if (fechaForzada.startsWith('0')) {
+        fechaForzada = fechaForzada.substring(1);
+    }
+    
+    // Guardamos el número ya limpio en el localStorage
+    localStorage.setItem('activeForce', fechaForzada);
+    
+    if(navigator.vibrate) navigator.vibrate([30, 50, 30]);
+    alert("Fecha forzada activada: " + fechaForzada);
+    window.location.href = 'index.html';
+}
+
 
         // Carga inicial
         renderPresets();

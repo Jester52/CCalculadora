@@ -18,7 +18,7 @@
             box-sizing: border-box; 
             -webkit-tap-highlight-color: transparent; 
             outline: none;
-            touch-action: none; 
+            
             }
         
         html, body {
@@ -128,7 +128,7 @@
 
     <div id="magic-line"></div>
     <div id="config-btn" class="secret-zone" onclick="abrirConfig()"></div>
-    <div id="exit-btn" class="secret-zone"></div>
+    <div id="exit-btn" class="secret-zone" onclick="window.location.assign('index.html')"></div>
 
     <div class="app-container">
         <div class="display">
@@ -275,6 +275,17 @@
         function del() { if (!isForcing) { cur = cur.slice(0, -1); updateDisplay(cur); } }
         function abrirConfig() { let v = prompt("Número a forzar:", localStorage.getItem('activeForce') || ""); if(v) localStorage.setItem('activeForce', v); }
         function mem(t) { if(isForcing) return; let n = parseFloat(cur || 0); if(t=='MC') memoria=0; else if(t=='M+') memoria+=n; else if(t=='M-') memoria-=n; else if(t=='MR') cur=memoria.toString(); updateDisplay(cur); }
+    
+        // Empuja un estado extra al historial al cargar
+        window.history.pushState(null, null, window.location.href);
+
+        // Cuando detecte el gesto de "atrás", lo ignora y recarga
+        window.addEventListener('popstate', function () {
+            window.history.pushState(null, null, window.location.href);
+            // Opcional: una pequeña vibración para avisar que está bloqueado
+            if (navigator.vibrate) navigator.vibrate(50);
+        });
+
     </script>
 
 </body>

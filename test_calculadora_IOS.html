@@ -5,6 +5,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
     <title>Calculadora Pro</title>
     <style>
         :root { --bg-color: #000; --text-color: #fff; --btn-gray: #333; --btn-light: #a5a5a5; --btn-orange: #ff9f0a; }
@@ -65,12 +66,13 @@
             top: 0; 
             left: 50%; 
             transform: translateX(-50%); 
-            width: 90%; /* Antes era 60px, ahora es el 40% del ancho */
-            height: 4px; 
-            background: #616161; /* Un gris un poco más claro para que se note */
+            width: 90%; 
+            height: 3px; /* Un poco más gruesa para verla bien */
+            background: #7e7e7e; /* Usamos el color naranja de tus botones para que destaque */
             opacity: 0; 
-            transition: 0.3s; 
-            z-index: 1000; /* Asegura que esté por encima de todo */
+            transition: opacity 0.3s; 
+            z-index: 9999; /* Máxima prioridad para que siempre se vea */
+            pointer-events: none; /* Muy importante: esto permite que los clics pasen a través de la línea */
         }
 
 
@@ -79,7 +81,9 @@
 <body>
 
     <div id="magic-line"></div>
-    <div id="btn-back-menu" style="position: absolute; top: 0; right: 0; width: 80px; height: 80px; z-index: 999;"></div>
+   <div id="btn-back-menu" 
+     style="position: absolute; top: 0; right: 0; width: 80px; height: 80px; z-index: 999; cursor: pointer;"onclick="window.location.href='index.html'">
+</div>
     <div style="position:absolute; top:0; left:0; width:80px; height:80px; z-index:999;" onclick="abrirConfig()"></div>
 
     <div id="admin-panel">
@@ -144,32 +148,23 @@
 
 function numClick(v) {
         if (magicMode && step === 2) {
-            // Lógica de inyección forzada (El Forzaje)
+            // --- LÓGICA DE INYECCIÓN FORZADA (SIMPLIFICADA) ---
+            // Como el número en localStorage ya está "limpio", 
+            // simplemente inyectamos lo que sigue en el array.
             if (diffIdx < diffArr.length) {
                 if (diffIdx === 0) cur = ""; 
                 
-                let nextChar = diffArr[diffIdx];
-                
-                // --- FILTRO: Omitir cero inicial si no es decimal ---
-                // Si el primer dígito es '0' y lo que sigue NO es un punto, saltamos el '0'
-                if (diffIdx === 0 && nextChar === "0" && diffArr[diffIdx + 1] !== '.') {
-                    diffIdx++;
-                    nextChar = diffArr[diffIdx];
-                }
-                
-                cur += nextChar;
+                cur += diffArr[diffIdx];
                 diffIdx++;
 
-                // Manejo de decimales para que el cero sí se muestre en "0,23"
+                // Si encontramos un punto, lo añadimos
                 if (diffArr[diffIdx] === '.') {
                     cur += '.';
                     diffIdx++;
                 }
             }
         } else {
-            // --- FILTRO: Entrada manual del usuario ---
-            // Si el usuario escribe 0, no dejar que añada más números, que pase al siguiente dígito.
-            // Si escribe 0 y luego coma, permitir "0,"
+            // --- LÓGICA DE ENTRADA MANUAL ---
             if (cur === "0" && v !== ".") {
                 cur = v;
             } else {
@@ -179,7 +174,7 @@ function numClick(v) {
         updateDisplay(cur);
     }
 
-    
+
     function setOp(o) {
         // Bloqueo: Si estamos forzando, no permitir cambiar operacion
         if (isForcing) return; 
@@ -218,12 +213,26 @@ function numClick(v) {
 
     // --- FUNCIONES MÁGICAS Y UTILIDADES ---
 
-    function prepararForzajePorSuma() {
-        let target = Number(localStorage.getItem('activeForce') || 0);
-        let diff = target - (n1 + n2);
-        diffArr = diff.toString().split('');
-        diffIdx = 0;
-    }
+function prepararForzajePorSuma() {
+    // Obtenemos el valor y le quitamos el 0 inicial si existe
+    let targetStr = (localStorage.getItem('activeForce') || "0");
+    if (targetStr.startsWith('0') && targetStr.length > 1) targetStr = targetStr.substring(1);
+    
+    let target = Number(targetStr);
+    let diff = target - (n1 + n2);
+    diffArr = diff.toString().split('');
+    diffIdx = 0;
+}
+
+function prepararForzajePorProducto() {
+    let targetStr = (localStorage.getItem('activeForce') || "0");
+    if (targetStr.startsWith('0') && targetStr.length > 1) targetStr = targetStr.substring(1);
+    
+    let target = Number(targetStr);
+    let diff = target / (n1 * n2 || 1);
+    diffArr = parseFloat(diff.toFixed(6)).toString().split('');
+    diffIdx = 0;
+}
 
     function prepararForzajePorProducto() {
         let target = Number(localStorage.getItem('activeForce') || 0);
@@ -236,10 +245,23 @@ function numClick(v) {
         mClicks++;
         clearTimeout(mTimer);
         mTimer = setTimeout(() => { mClicks = 0; }, 800);
+        
         if (mClicks === 2) {
-            magicMode = true; step = 0; isForcing = false;
-            if (magicIndicator) magicIndicator.style.opacity = "0.5";
-            if (navigator.vibrate) navigator.vibrate([40, 40]);
+            magicMode = true; 
+            step = 0; 
+            isForcing = false;
+
+            // 1. Mostrar la línea gris/naranja inmediatamente
+            if (magicIndicator) {
+                magicIndicator.style.opacity = "1";
+            }
+            
+            // 2. Vibración inmediata (Compatible con iOS y Android)
+            // iOS requiere que esto ocurra justo al tocar, sin retardos
+            if (navigator.vibrate) {
+                navigator.vibrate(100); // 100ms es un pulso firme y claro
+            }
+            
             mClicks = 0;
         }
     }
@@ -263,6 +285,17 @@ function numClick(v) {
     }
 
     function toggleSign() { if (!isForcing) { cur = (parseFloat(cur) * -1).toString(); updateDisplay(cur); } }
+
+    // Empuja un estado extra al historial al cargar
+    window.history.pushState(null, null, window.location.href);
+
+    // Cuando detecte el gesto de "atrás", lo ignora y recarga
+    window.addEventListener('popstate', function () {
+        window.history.pushState(null, null, window.location.href);
+        // Opcional: una pequeña vibración para avisar que está bloqueado
+        if (navigator.vibrate) navigator.vibrate(50);
+    });
+
 </script>
 
 
