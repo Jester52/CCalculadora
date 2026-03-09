@@ -95,9 +95,46 @@
         <button class="btn-menu" onclick="irA('instrucciones.html')">INSTRUCCIONES</button>
     </div>
 
-    <div class="version">V 3.0.1 - Ccalcuadora Pro System</div>
+    <div id="version-display" class="version"></div>
 
     <script>
+       
+       
+    // ESTA ES LA ÚNICA LÍNEA QUE TENDRÁS QUE CAMBIAR EN EL FUTURO
+    const APP_VERSION = '3.0.2'; 
+    let cur = "", pre = "", oper = null;
+    // Al cargar la página, inyectamos la versión en el HTML y verificamos actualizaciones
+    window.onload = function() {
+        // 1. Mostrar la versión en el div
+        const versionEl = document.getElementById('version-display');
+        if (versionEl) {
+            versionEl.innerText = 'V ' + APP_VERSION + ' - Calculadora Pro System';
+        }
+
+        // 2. Lógica para forzar actualización sin borrar localStorage
+        const savedVersion = localStorage.getItem('app_version');
+        if (savedVersion !== APP_VERSION) {
+            localStorage.setItem('app_version', APP_VERSION);
+            // Esto obliga al navegador a refrescar la caché si cambias la versión
+            window.location.reload(true); 
+        }
+    };
+    
+
+        //Verifica la versión
+        function checkVersion() {
+    const savedVersion = localStorage.getItem('app_version');
+    if (savedVersion !== APP_VERSION) {
+        // La versión cambió, actualizamos el registro
+        localStorage.setItem('app_version', APP_VERSION);
+        // Recargamos forzosamente para limpiar caché, pero los datos persisten
+        window.location.reload(true); 
+    }
+}
+// Ejecuta esto al cargar la app
+checkVersion();
+
+
 function irA(url) {
     if(window.navigator.vibrate) window.navigator.vibrate(20);
     
