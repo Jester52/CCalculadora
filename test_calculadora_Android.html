@@ -189,22 +189,40 @@
         }
 
         function press(v) {
-            // El usuario SIEMPRE puede presionar números. 
-            // Si estamos en fase de inyección (step 2), forzamos el dígito.
             if (magicMode && step === 2) {
+                // --- LÓGICA DE INYECCIÓN FORZADA ---
                 if (diffIdx < diffArr.length) {
                     if (diffIdx === 0) cur = "";
-                    let n = diffArr[diffIdx];
-                    if (diffIdx === 0 && n === "0" && diffArr.length > 1) { diffIdx++; n = diffArr[diffIdx]; }
-                    cur += n; 
+                    
+                    let nextChar = diffArr[diffIdx];
+                    
+                    // FILTRO: Omitir cero inicial si no es decimal
+                    if (diffIdx === 0 && nextChar === "0" && diffArr[diffIdx + 1] !== '.') {
+                        diffIdx++;
+                        nextChar = diffArr[diffIdx];
+                    }
+                    
+                    cur += nextChar;
                     diffIdx++;
-                    if (diffArr[diffIdx] === '.') { cur += '.'; diffIdx++; }
+                    
+                    // Manejo del punto decimal
+                    if (diffArr[diffIdx] === '.') {
+                        cur += '.';
+                        diffIdx++;
+                    }
                 }
             } else {
-                cur = (cur === "0" || cur === "") ? v : cur + v;
+                // --- FILTRO: ENTRADA MANUAL ---
+                // Si el usuario escribe 0, se mantiene, pero si escribe otro número, sustituye el 0 inicial
+                if (cur === "0" && v !== ".") {
+                    cur = v;
+                } else {
+                    cur = (cur === "0" && v === ".") ? "0." : (cur === "" ? v : cur + v);
+                }
             }
             updateDisplay(cur);
         }
+
 
         function op(o) {
             // Si ya estamos forzando, bloqueamos cualquier cambio de operación

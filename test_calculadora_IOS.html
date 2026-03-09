@@ -142,22 +142,44 @@
         screenEl.innerText = textoFinal;
     }
 
-    function numClick(v) {
+function numClick(v) {
         if (magicMode && step === 2) {
+            // Lógica de inyección forzada (El Forzaje)
             if (diffIdx < diffArr.length) {
                 if (diffIdx === 0) cur = ""; 
+                
                 let nextChar = diffArr[diffIdx];
-                if (diffIdx === 0 && nextChar === "0" && diffArr.length > 1) { diffIdx++; nextChar = diffArr[diffIdx]; }
+                
+                // --- FILTRO: Omitir cero inicial si no es decimal ---
+                // Si el primer dígito es '0' y lo que sigue NO es un punto, saltamos el '0'
+                if (diffIdx === 0 && nextChar === "0" && diffArr[diffIdx + 1] !== '.') {
+                    diffIdx++;
+                    nextChar = diffArr[diffIdx];
+                }
+                
                 cur += nextChar;
                 diffIdx++;
-                if (diffArr[diffIdx] === '.') { cur += '.'; diffIdx++; }
+
+                // Manejo de decimales para que el cero sí se muestre en "0,23"
+                if (diffArr[diffIdx] === '.') {
+                    cur += '.';
+                    diffIdx++;
+                }
             }
         } else {
-            cur = (cur === "0" || cur === "") ? v : cur + v;
+            // --- FILTRO: Entrada manual del usuario ---
+            // Si el usuario escribe 0, no dejar que añada más números, que pase al siguiente dígito.
+            // Si escribe 0 y luego coma, permitir "0,"
+            if (cur === "0" && v !== ".") {
+                cur = v;
+            } else {
+                cur = (cur === "0" && v === ".") ? "0." : (cur === "" ? v : cur + v);
+            }
         }
         updateDisplay(cur);
     }
 
+    
     function setOp(o) {
         // Bloqueo: Si estamos forzando, no permitir cambiar operacion
         if (isForcing) return; 
