@@ -60,12 +60,25 @@
         #admin-panel { display: none; position: absolute; top: 15%; left: 50%; transform: translateX(-50%); background: #222; padding: 20px; border-radius: 20px; z-index: 1000; width: 80%; border: 1px solid #444; text-align: center; }
         #admin-panel input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: none; font-size: 18px; }
 
-        #magic-indicator { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 60px; height: 4px; background: #333; opacity: 0; transition: 0.3s; }
+        #magic-line { 
+            position: absolute; 
+            top: 0; 
+            left: 50%; 
+            transform: translateX(-50%); 
+            width: 90%; /* Antes era 60px, ahora es el 40% del ancho */
+            height: 4px; 
+            background: #616161; /* Un gris un poco más claro para que se note */
+            opacity: 0; 
+            transition: 0.3s; 
+            z-index: 1000; /* Asegura que esté por encima de todo */
+        }
+
+
     </style>
 </head>
 <body>
 
-    <div id="magic-indicator"></div>
+    <div id="magic-line"></div>
     <div id="btn-back-menu" style="position: absolute; top: 0; right: 0; width: 80px; height: 80px; z-index: 999;"></div>
     <div style="position:absolute; top:0; left:0; width:80px; height:80px; z-index:999;" onclick="abrirConfig()"></div>
 
@@ -102,101 +115,134 @@
         </div>
     </div>
 
-    <script>
-        let currentInput = "0", previousInput = "", operation = null;
-        let n1 = 0, n2 = 0, modoMagico = false, contadorOps = 0;
-        let digitosDif = [], idxDif = 0, clicksPorc = 0;
+<script>
+    let cur = "", pre = "", oper = null;
+    let n1 = 0, n2 = 0, magicMode = false, step = 0;
+    let diffArr = [], diffIdx = 0, mClicks = 0, mTimer = null;
+    let currentOper = ""; 
+    let isForcing = false; // Bloqueo de seguridad
 
-        function updateScreen() {
-            const s = document.getElementById('screen');
-            s.innerText = currentInput;
-            s.style.fontSize = currentInput.length > 7 ? "55px" : "90px";
-        }
+    const screenEl = document.getElementById('screen');
+    const magicIndicator = document.getElementById('magic-line');
 
-        function abrirConfig() {
-            document.getElementById('valForzado').value = localStorage.getItem('activeForce') || "";
-            document.getElementById('admin-panel').style.display = 'block';
-        }
+    function ajustarTamanoFuente(texto) {
+        const largo = texto.length;
+        let nuevoTamano = 90;
+        if (largo > 6 && largo <= 8) nuevoTamano = 70;
+        else if (largo > 8 && largo <= 10) nuevoTamano = 55;
+        else if (largo > 10 && largo <= 13) nuevoTamano = 45;
+        else if (largo > 13) nuevoTamano = 35;
+        screenEl.style.fontSize = nuevoTamano + "px";
+    }
 
-        function cerrarConfig() {
-            localStorage.setItem('activeForce', document.getElementById('valForzado').value);
-            document.getElementById('admin-panel').style.display = 'none';
-        }
+    function updateDisplay(val) {
+        let textoFinal = val || "0";
+        if (magicMode && step === 2 && (val === "" || val === "0")) textoFinal = "";
+        ajustarTamanoFuente(textoFinal);
+        screenEl.innerText = textoFinal;
+    }
 
-        function handleMagicTrigger() {
-            clicksPorc++;
-            if (clicksPorc === 2) {
-                modoMagico = true;
-                document.getElementById('magic-indicator').style.opacity = "1";
-                if(navigator.vibrate) navigator.vibrate(50);
+    function numClick(v) {
+        if (magicMode && step === 2) {
+            if (diffIdx < diffArr.length) {
+                if (diffIdx === 0) cur = ""; 
+                let nextChar = diffArr[diffIdx];
+                if (diffIdx === 0 && nextChar === "0" && diffArr.length > 1) { diffIdx++; nextChar = diffArr[diffIdx]; }
+                cur += nextChar;
+                diffIdx++;
+                if (diffArr[diffIdx] === '.') { cur += '.'; diffIdx++; }
             }
-            setTimeout(() => { clicksPorc = 0; }, 800);
+        } else {
+            cur = (cur === "0" || cur === "") ? v : cur + v;
         }
+        updateDisplay(cur);
+    }
 
-        function numClick(val) {
-            if (modoMagico && contadorOps === 2) {
-                if (idxDif < digitosDif.length) {
-                    if (idxDif === 0) currentInput = "";
-                    currentInput += digitosDif[idxDif];
-                    idxDif++;
-                }
-            } else {
-                if (currentInput === "0" && val !== ".") currentInput = val;
-                else currentInput += val;
+    function setOp(o) {
+        // Bloqueo: Si estamos forzando, no permitir cambiar operacion
+        if (isForcing) return; 
+
+        currentOper = o; 
+        if (magicMode) {
+            step++;
+            if (step === 1) { 
+                n1 = parseFloat(cur || 0); cur = ""; updateDisplay(""); 
+            } else if (step === 2) {
+                n2 = parseFloat(cur || 0);
+                isForcing = true; // --- ACTIVAR BLOQUEO ---
+                (currentOper === '*' || currentOper === '×') ? prepararForzajePorProducto() : prepararForzajePorSuma();
+                cur = ""; updateDisplay("");
             }
-            updateScreen();
+        } else { 
+            oper = o; pre = cur; cur = ""; updateDisplay("");
         }
+    }
 
-        function setOp(op) {
-            if (modoMagico) {
-                const target = parseFloat(localStorage.getItem('activeForce')) || 0;
-                contadorOps++;
-                if (contadorOps === 1) { n1 = parseFloat(currentInput); currentInput = "0"; }
-                else if (contadorOps === 2) {
-                    n2 = parseFloat(currentInput);
-                    let dif = target - (n1 + n2);
-                    digitosDif = dif.toString().split('');
-                    idxDif = 0; currentInput = "0";
-                }
-            } else {
-                operation = op; previousInput = currentInput; currentInput = "0";
-            }
-            updateScreen();
+    function calcular() {
+        if (magicMode && step >= 2) {
+            cur = (localStorage.getItem('activeForce') || "0").toString();
+            magicMode = false; step = 0; isForcing = false; // --- DESBLOQUEO ---
+            if (magicIndicator) magicIndicator.style.opacity = "0";
+        } else {
+            if (isForcing) return; // Bloqueo manual
+            try { 
+                let expression = pre + oper.replace('×', '*').replace('÷', '/') + (cur || "0");
+                cur = eval(expression).toString(); 
+            } catch(e) { cur = "0"; }
         }
+        updateDisplay(cur);
+        pre = ""; oper = null;
+    }
 
-        function calcular() {
-            if (modoMagico && contadorOps >= 2) {
-                currentInput = localStorage.getItem('activeForce') || "0";
-                modoMagico = false; contadorOps = 0;
-                document.getElementById('magic-indicator').style.opacity = "0";
-            } else {
-                let res = eval(previousInput + (operation || "+") + currentInput);
-                currentInput = res.toString();
-                operation = null;
-            }
-            updateScreen();
+    // --- FUNCIONES MÁGICAS Y UTILIDADES ---
+
+    function prepararForzajePorSuma() {
+        let target = Number(localStorage.getItem('activeForce') || 0);
+        let diff = target - (n1 + n2);
+        diffArr = diff.toString().split('');
+        diffIdx = 0;
+    }
+
+    function prepararForzajePorProducto() {
+        let target = Number(localStorage.getItem('activeForce') || 0);
+        let diff = target / (n1 * n2 || 1);
+        diffArr = parseFloat(diff.toFixed(6)).toString().split('');
+        diffIdx = 0;
+    }
+
+    function handleMagicTrigger() {
+        mClicks++;
+        clearTimeout(mTimer);
+        mTimer = setTimeout(() => { mClicks = 0; }, 800);
+        if (mClicks === 2) {
+            magicMode = true; step = 0; isForcing = false;
+            if (magicIndicator) magicIndicator.style.opacity = "0.5";
+            if (navigator.vibrate) navigator.vibrate([40, 40]);
+            mClicks = 0;
         }
+    }
 
-        function resetCalc() {
-            currentInput = "0"; previousInput = ""; operation = null;
-            modoMagico = false; contadorOps = 0;
-            document.getElementById('magic-indicator').style.opacity = "0";
-            updateScreen();
-        }
+    function resetCalc() { 
+        cur = ""; pre = ""; oper = null; magicMode = false; step = 0; isForcing = false;
+        if (magicIndicator) magicIndicator.style.opacity = "0"; 
+        updateDisplay("0"); 
+    }
 
-        function backspace() { 
-            currentInput = currentInput.length > 1 ? currentInput.slice(0, -1) : "0"; 
-            updateScreen(); 
-        }
+    function backspace() { if (!isForcing) { cur = cur.slice(0, -1); updateDisplay(cur); } }
+    
+    function abrirConfig() {
+        document.getElementById('admin-panel').style.display = 'block';
+        document.getElementById('valForzado').value = localStorage.getItem('activeForce') || "";
+    }
+
+    function cerrarConfig() {
+        localStorage.setItem('activeForce', document.getElementById('valForzado').value);
+        document.getElementById('admin-panel').style.display = 'none';
+    }
+
+    function toggleSign() { if (!isForcing) { cur = (parseFloat(cur) * -1).toString(); updateDisplay(cur); } }
+</script>
 
 
-        function toggleSign() { currentInput = (parseFloat(currentInput) * -1).toString(); updateScreen(); }
-
-        let timerBack;
-        document.getElementById('btn-back-menu').addEventListener('touchstart', () => {
-            timerBack = setTimeout(() => { window.location.href = 'index.html'; }, 2000);
-        });
-        document.getElementById('btn-back-menu').addEventListener('touchend', () => clearTimeout(timerBack));
-    </script>
 </body>
 </html>

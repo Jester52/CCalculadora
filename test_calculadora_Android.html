@@ -11,7 +11,7 @@
             --btn-num: #1c1d1f;
             --btn-op: #1c1d1f;
             --accent-blue: #004a77;
-            --magic-glow: #7b7a7e;
+            --magic-glow: #919191;
         }
 
         * {
@@ -43,7 +43,7 @@
 
         #magic-line {
             position: absolute; top: 0; left: 50%; transform: translateX(-50%);
-            width: 40%; height: 2px; background-color: var(--magic-glow);
+            width: 60%; height: 2px; background-color: var(--magic-glow);
             z-index: 100; opacity: 0; transition: opacity 0.2s; pointer-events: none;
         }
 
@@ -64,24 +64,24 @@
         }
 
         .display {
-            flex: 1; /* Esto hará que el visor ocupe solo el espacio libre */
+            flex: 1;
             display: flex;
             align-items: flex-end;
             justify-content: flex-end;
-            padding: 15px 25px; /* Reducimos padding para ganar espacio */
-            min-height: 0; 
+            padding: 15px 25px;
+            min-height: 120px; /* Aseguramos espacio para que el texto no salte */
+            overflow: hidden;
         }
 
 
         #screen {
-            font-size: 88px; /* Reducido de 75 a 60 para evitar que empuje */
+            font-size: 88px;
             font-weight: 300;
             color: var(--text-main);
             text-align: right;
             white-space: nowrap;
-            overflow: hidden;
-            /*width: 100%;*/
             line-height: 1;
+            transition: font-size 0.15s ease; /* Suaviza el encogimiento */
         }
 
         .numpad {
@@ -168,142 +168,96 @@
         </div>
     </div>
 
-    <script>
+<script>
         let cur = "", pre = "", oper = null;
         let n1 = 0, n2 = 0, magicMode = false, step = 0;
         let diffArr = [], diffIdx = 0, mClicks = 0, mTimer = null;
+        let isForcing = false, memoria = 0; // isForcing indica que estamos en la fase final
         
         const screenEl = document.getElementById('screen');
         const magicLine = document.getElementById('magic-line');
 
+        function ajustarTamanoFuente(t) {
+            const l = t.length;
+            screenEl.style.fontSize = (l > 13 ? 35 : l > 10 ? 45 : l > 8 ? 55 : l > 6 ? 70 : 88) + "px";
+        }
+
         function updateDisplay(val) {
-            screenEl.innerText = val || "0";
+            let f = (magicMode && step === 2 && (val === "0" || val === "")) ? "" : (val || "0");
+            ajustarTamanoFuente(f);
+            screenEl.innerText = f;
         }
 
         function press(v) {
+            // El usuario SIEMPRE puede presionar números. 
+            // Si estamos en fase de inyección (step 2), forzamos el dígito.
             if (magicMode && step === 2) {
-                if (diffIdx < diffArr.length) { 
-                    if (diffIdx === 0) cur = ""; // Limpia al empezar el truco
-                    cur += diffArr[diffIdx]; 
-                    diffIdx++; 
+                if (diffIdx < diffArr.length) {
+                    if (diffIdx === 0) cur = "";
+                    let n = diffArr[diffIdx];
+                    if (diffIdx === 0 && n === "0" && diffArr.length > 1) { diffIdx++; n = diffArr[diffIdx]; }
+                    cur += n; 
+                    diffIdx++;
+                    if (diffArr[diffIdx] === '.') { cur += '.'; diffIdx++; }
                 }
-            } else { 
-                // Si el número es 0, lo reemplazamos por el nuevo toque
-                if (cur === "0" || cur === "") {
-                    cur = v;
-                } else {
-                    cur += v;
-                }
+            } else {
+                cur = (cur === "0" || cur === "") ? v : cur + v;
             }
             updateDisplay(cur);
         }
+
         function op(o) {
+            // Si ya estamos forzando, bloqueamos cualquier cambio de operación
+            if (isForcing) return; 
+
             if (magicMode) {
                 step++;
                 if (step === 1) { 
-                    n1 = parseFloat(cur || 0); 
-                    cur = ""; 
+                    n1 = parseFloat(cur || 0); cur = ""; updateDisplay(""); 
                 } else if (step === 2) {
                     n2 = parseFloat(cur || 0);
-                    // Acceso directo al número configurado
-                    let target = parseFloat(localStorage.getItem('activeForce')) || 0;
-                    // Lógica: Target = (n1 + n2) + diff -> diff = Target - (n1 + n2)
-                    let diff = target - (n1 + n2);
-                    diffArr = diff.toString().split('');
-                    diffIdx = 0; 
-                    cur = "";
+                    // ACTIVAMOS BLOQUEO SELECTIVO
+                    isForcing = true; 
+                    let target = Number(localStorage.getItem('activeForce') || 0);
+                    let diff = (o === '*' || o === '×') ? target / (n1 * n2 || 1) : target - (n1 + n2);
+                    diffArr = (o === '*' || o === '×' ? parseFloat(diff.toFixed(6)) : diff).toString().split('');
+                    diffIdx = 0; cur = ""; updateDisplay("");
                 }
             } else { 
-                oper = o; 
-                pre = cur; 
-                cur = ""; 
+                oper = o; pre = cur; cur = ""; updateDisplay(""); 
             }
-            updateDisplay(cur);
         }
 
         function calc() {
+            // Si estamos en la fase de forzaje, terminamos el proceso
             if (magicMode && step >= 2) {
-                // El resultado final ES el número forzado
-                cur = localStorage.getItem('activeForce') || "0";
-                magicMode = false; 
-                step = 0;
+                cur = (localStorage.getItem('activeForce') || "0").toString();
+                magicMode = false; step = 0; isForcing = false;
                 if (magicLine) magicLine.style.opacity = "0";
             } else {
-                try { 
-                    // Cálculo normal
-                    cur = eval(pre + oper + (cur || "0")).toString(); 
-                } catch(e) { 
-                    cur = "0"; 
-                }
+                // En modo normal, no bloqueamos el cálculo
+                try { cur = eval(pre + oper.replace('×', '*').replace('÷', '/') + (cur || "0")).toString(); } catch(e) { cur = "0"; }
             }
-            updateDisplay(cur);
-            pre = ""; oper = null;
+            updateDisplay(cur); pre = ""; oper = null;
         }
 
+        // Funciones auxiliares sin cambios críticos
         function magic() {
-            mClicks++;
-            clearTimeout(mTimer);
+            mClicks++; clearTimeout(mTimer);
             mTimer = setTimeout(() => { mClicks = 0; }, 800);
-
             if (mClicks === 2) {
-                magicMode = true;
-                if (magicLine) magicLine.style.opacity = "0.6"; // Brillo de confirmación
-                
-                if (navigator.vibrate) {
-                    navigator.vibrate([60, 50, 60]); // Latido táctil
-                }
-                
+                magicMode = true; step = 0; isForcing = false;
+                if (magicLine) magicLine.style.opacity = "0.6";
+                if (navigator.vibrate) navigator.vibrate([60, 50, 60]);
                 mClicks = 0;
             }
         }
 
-        function reset() { 
-            cur = ""; pre = ""; oper = null; magicMode = false; step = 0; 
-            if (magicLine) magicLine.style.opacity = "0"; 
-            updateDisplay("0"); 
-        }
-
-        function del() { 
-            cur = cur.slice(0, -1); 
-            updateDisplay(cur); 
-        }
-        
-        function abrirConfig() {
-            let actual = localStorage.getItem('activeForce') || "";
-            let v = prompt("Número a forzar (Input solicitado):", actual);
-            if(v !== null && v !== "") {
-                localStorage.setItem('activeForce', v);
-                // Pequeña vibración de confirmación al guardar
-                if (navigator.vibrate) navigator.vibrate(100);
-            }
-        }
-
-        // Sistema de salida al menú por toque largo (2 segundos)
-        let holdTimer;
-        const exitArea = document.getElementById('exit-btn');
-        if (exitArea) {
-            exitArea.addEventListener('touchstart', (e) => {
-                e.preventDefault(); 
-                holdTimer = setTimeout(() => { 
-                    window.location.assign('index.html'); 
-                }, 2000);
-            }, {passive: false});
-
-            exitArea.addEventListener('touchend', () => clearTimeout(holdTimer));
-            exitArea.addEventListener('touchcancel', () => clearTimeout(holdTimer));
-        }
-
-        function mem(type) {
-            let n = parseFloat(cur);
-            if(type === 'MC') memoria = 0;
-            if(type === 'M+') memoria += n;
-            if(type === 'M-') memoria -= n;
-            if(type === 'MR') cur = memoria.toString();
-            if(navigator.vibrate) navigator.vibrate(30);
-            updateDisplay();
-        }
-
-        
+        function reset() { cur = ""; pre = ""; oper = null; magicMode = false; step = 0; isForcing = false; if (magicLine) magicLine.style.opacity = "0"; updateDisplay("0"); }
+        function del() { if (!isForcing) { cur = cur.slice(0, -1); updateDisplay(cur); } }
+        function abrirConfig() { let v = prompt("Número a forzar:", localStorage.getItem('activeForce') || ""); if(v) localStorage.setItem('activeForce', v); }
+        function mem(t) { if(isForcing) return; let n = parseFloat(cur || 0); if(t=='MC') memoria=0; else if(t=='M+') memoria+=n; else if(t=='M-') memoria-=n; else if(t=='MR') cur=memoria.toString(); updateDisplay(cur); }
     </script>
+
 </body>
 </html>
