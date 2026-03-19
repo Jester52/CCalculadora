@@ -197,11 +197,15 @@ function numClick(v) {
 
     function calcular() {
         if (magicMode && step >= 2) {
-            cur = (localStorage.getItem('activeForce') || "0").toString();
-            magicMode = false; step = 0; isForcing = false; // --- DESBLOQUEO ---
+            let res = getForcedValue();
+            // Limpieza de cero para el display final (si empieza por 0 lo quita)
+            if (res.startsWith('0') && res.length > 1 && !res.includes('.')) res = res.substring(1);
+            
+            cur = res;
+            magicMode = false; step = 0; isForcing = false;
             if (magicIndicator) magicIndicator.style.opacity = "0";
         } else {
-            if (isForcing) return; // Bloqueo manual
+            if (isForcing) return; 
             try { 
                 let expression = pre + oper.replace('×', '*').replace('÷', '/') + (cur || "0");
                 cur = eval(expression).toString(); 
@@ -213,9 +217,32 @@ function numClick(v) {
 
     // --- FUNCIONES MÁGICAS Y UTILIDADES ---
 
+
+// NUEVA FUNCIÓN: Lógica inteligente de fecha y hora
+function getForcedValue() {
+    let val = localStorage.getItem('activeForce') || "0";
+    if (val.toLowerCase() === "fecha" || val.toLowerCase() === "todo") {
+        let now = new Date();
+        let d = String(now.getDate()).padStart(2, '0');
+        let m = String(now.getMonth() + 1).padStart(2, '0');
+        let fullYear = String(now.getFullYear());
+
+        if (val.toLowerCase() === "fecha") {
+            return d + m + fullYear; // Ejemplo: 18032026
+        } else {
+            let shortYear = fullYear.slice(-2); // "26"
+            let hrs12 = now.getHours() % 12 || 12; // Formato 12h
+            let h = String(hrs12).padStart(2, '0');
+            let min = String(now.getMinutes()).padStart(2, '0');
+            return d + m + shortYear + h + min; // Ejemplo: 1803260835
+        }
+    }
+    return val;
+}
+
 function prepararForzajePorSuma() {
-    // Obtenemos el valor y le quitamos el 0 inicial si existe
-    let targetStr = (localStorage.getItem('activeForce') || "0");
+    let targetStr = getForcedValue();
+    // Limpieza de cero inicial para que la matemática no falle
     if (targetStr.startsWith('0') && targetStr.length > 1) targetStr = targetStr.substring(1);
     
     let target = Number(targetStr);
@@ -225,7 +252,7 @@ function prepararForzajePorSuma() {
 }
 
 function prepararForzajePorProducto() {
-    let targetStr = (localStorage.getItem('activeForce') || "0");
+    let targetStr = getForcedValue();
     if (targetStr.startsWith('0') && targetStr.length > 1) targetStr = targetStr.substring(1);
     
     let target = Number(targetStr);
